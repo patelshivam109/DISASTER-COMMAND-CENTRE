@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, User
+from services.workflow_service import ensure_volunteer_profile_for_user
 
 
 auth_bp = Blueprint("auth_bp", __name__)
@@ -33,6 +34,7 @@ def signup():
 
     db.session.add(user)
     db.session.commit()
+    ensure_volunteer_profile_for_user(user)
 
     return jsonify({"message": "User created successfully", "user": user.to_dict()}), 201
 
@@ -51,4 +53,5 @@ def login():
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid credentials"}), 401
 
+    ensure_volunteer_profile_for_user(user)
     return jsonify({"user": user.to_dict()}), 200

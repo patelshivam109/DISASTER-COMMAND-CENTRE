@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import useDarkMode from '../hooks/useDarkMode';
-import { getUserRole, isAdmin, isLoggedIn } from '../utils/auth';
+import { getUserRole, isLoggedIn } from '../utils/auth';
 import { 
   LayoutDashboard, 
   AlertTriangle, 
@@ -19,7 +19,6 @@ const Sidebar = () => {
   const [isDark, setIsDark] = useDarkMode();
   const hasUser = isLoggedIn();
   const role = hasUser ? getUserRole() : 'guest';
-  const canManageVolunteers = hasUser && isAdmin();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -36,11 +35,8 @@ const Sidebar = () => {
     { to: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
     { to: "/disasters", icon: <AlertTriangle size={20} />, label: "Disasters" },
     { to: "/resources", icon: <Package size={20} />, label: "Resources" },
+    { to: "/volunteers", icon: <Users size={20} />, label: role === "admin" ? "Volunteers" : "My Tasks" },
   ];
-
-  if (canManageVolunteers) {
-    navItems.push({ to: "/volunteers", icon: <Users size={20} />, label: "Volunteers" });
-  }
 
   return (
     <aside 

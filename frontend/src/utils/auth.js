@@ -10,20 +10,22 @@ export const getStoredUser = () => {
 export const isLoggedIn = () => Boolean(getStoredUser());
 
 export const getUserRole = () => {
-  const storedRole = (localStorage.getItem("userRole") || "volunteer").toLowerCase();
+  const user = getStoredUser();
+  const storedRole = (user?.role || localStorage.getItem("userRole") || "volunteer").toLowerCase();
   return storedRole === "admin" ? "admin" : "volunteer";
 };
 
 export const isAdmin = () => getUserRole() === "admin";
 
 export const buildRoleHeaders = (headers = {}) => {
-  if (!isLoggedIn()) {
+  const user = getStoredUser();
+  if (!user) {
     return headers;
   }
 
   return {
     ...headers,
     "X-Role": getUserRole(),
+    "X-User-Id": String(user.id),
   };
 };
-
