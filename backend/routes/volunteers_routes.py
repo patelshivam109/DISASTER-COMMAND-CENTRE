@@ -188,6 +188,10 @@ def assign_volunteer(volunteer_id):
     disaster = db.session.get(Disaster, data.get("disaster_id"))
     if not disaster:
         return jsonify({"error": "Disaster not found"}), 404
+    if disaster.status == "Closed":
+        return jsonify({"error": "Cannot assign volunteers to a closed disaster"}), 400
+    if volunteer.verification_status != "Verified":
+        return jsonify({"error": "Volunteer must be verified before assignment"}), 400
 
     task_details = (data.get("task_details") or "").strip() or "General field support"
 
@@ -195,18 +199,16 @@ def assign_volunteer(volunteer_id):
         volunteer_id=volunteer.id, disaster_id=disaster.id
     ).first()
     if assignment:
-        assignment.task_details = task_details
-        assignment.status = "Assigned"
-        assignment.assigned_by = g.current_user.username
-    else:
-        assignment = VolunteerAssignment(
-            volunteer_id=volunteer.id,
-            disaster_id=disaster.id,
-            task_details=task_details,
-            status="Assigned",
-            assigned_by=g.current_user.username,
-        )
-        db.session.add(assignment)
+        return jsonify({"error": "Volunteer is already assigned to this disaster"}), 409
+
+    assignment = VolunteerAssignment(
+        volunteer_id=volunteer.id,
+        disaster_id=disaster.id,
+        task_details=task_details,
+        status="Assigned",
+        assigned_by=g.current_user.username,
+    )
+    db.session.add(assignment)
 
     volunteer.disaster_id = disaster.id
     log_activity(
@@ -279,14 +281,18 @@ def respond_to_assignment(assignment_id):
     action = (data.get("action") or "").strip().lower()
     if action == "accept":
         assignment.status = "Accepted"
+        log_action = "Volunteer Accepted Assignment"
+        log_details = f"{volunteer.name} accepted assignment"
     elif action == "reject":
         assignment.status = "Rejected"
+        log_action = "Volunteer Rejected Assignment"
+        log_details = f"{volunteer.name} rejected assignment"
     else:
         return jsonify({"error": "Action must be accept or reject"}), 400
 
     log_activity(
-        action="Assignment Response",
-        details=f"{volunteer.name} {assignment.status.lower()} assignment",
+        action=log_action,
+        details=log_details,
         actor=g.current_user,
         disaster_id=assignment.disaster_id,
         volunteer_id=volunteer.id,

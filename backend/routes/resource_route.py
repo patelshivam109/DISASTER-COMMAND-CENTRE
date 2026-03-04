@@ -157,6 +157,8 @@ def allocate_resource(resource_id):
     disaster = db.session.get(Disaster, data.get("disaster_id"))
     if not disaster:
         return jsonify({"error": "Disaster not found"}), 404
+    if disaster.status == "Closed":
+        return jsonify({"error": "Cannot allocate resources to a closed disaster"}), 400
 
     quantity, error_response, status_code = parse_positive_int(data.get("quantity"), "quantity")
     if error_response:
@@ -182,6 +184,17 @@ def allocate_resource(resource_id):
         disaster_id=disaster.id,
         resource_id=resource.id,
     )
+
+    exhaustion_alert = None
+    if resource.quantity <= 0:
+        exhaustion_alert = f"{resource.name} stock is exhausted."
+        log_activity(
+            action="Resource Exhausted",
+            details=exhaustion_alert,
+            actor=g.current_user,
+            resource_id=resource.id,
+            disaster_id=disaster.id,
+        )
     db.session.commit()
 
     return (
@@ -190,6 +203,7 @@ def allocate_resource(resource_id):
                 "message": "Resource allocated successfully",
                 "resource": resource.to_dict(),
                 "allocation": allocation.to_dict(),
+                "alert": exhaustion_alert,
             }
         ),
         201,

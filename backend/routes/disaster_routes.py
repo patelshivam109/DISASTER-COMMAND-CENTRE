@@ -1,4 +1,6 @@
-from flask import Blueprint, g, jsonify, request
+import io
+
+from flask import Blueprint, g, jsonify, request, send_file
 
 from models import (
     ActivityLog,
@@ -6,15 +8,34 @@ from models import (
     DisasterProgressUpdate,
     ResourceAllocation,
     VolunteerAssignment,
+    utcnow,
     db,
 )
 from routes.access_control import require_auth, require_roles
-from services.workflow_service import log_activity
+from services.report_service import build_disaster_report_pdf, build_disaster_report_summary
+from services.workflow_service import (
+    build_disaster_workflow_flags,
+    can_transition_disaster_status,
+    get_active_assignment_count,
+    log_activity,
+)
 
 disaster_bp = Blueprint("disaster_bp", __name__)
 
 ALLOWED_PRIORITIES = {"Critical", "High", "Moderate"}
-ALLOWED_STATUSES = {"Active", "Recovering", "Closed"}
+ALLOWED_STATUSES = {"Created", "Active", "Recovering", "Closed"}
+
+
+def validate_affected_display(raw_value):
+    if raw_value is None:
+        return None, "affected_display is required"
+    if not isinstance(raw_value, str):
+        raw_value = str(raw_value)
+    if not raw_value.strip():
+        return None, "affected_display cannot be empty"
+    if len(raw_value) > 50:
+        return None, "affected_display must be 50 characters or fewer"
+    return raw_value, None
 
 
 @disaster_bp.route("/disasters", methods=["POST"])
@@ -29,14 +50,16 @@ def add_disaster():
     if priority not in ALLOWED_PRIORITIES:
         return jsonify({"error": "Invalid priority value"}), 400
 
-    status = data.get("status", "Active")
+    status = data.get("status", "Created")
     if status not in ALLOWED_STATUSES:
         return jsonify({"error": "Invalid status value"}), 400
+    if status != "Created":
+        return jsonify({"error": "New disasters must begin in Created status"}), 400
 
-    try:
-        affected_count = max(int(data.get("affected_count", 0)), 0)
-    except (TypeError, ValueError):
-        return jsonify({"error": "affected_count must be a number"}), 400
+    affected_input = data.get("affected_display", data.get("affected_count", "0"))
+    affected_display, affected_error = validate_affected_display(affected_input)
+    if affected_error:
+        return jsonify({"error": affected_error}), 400
 
     disaster = Disaster(
         type=data["type"],
@@ -46,14 +69,14 @@ def add_disaster():
         status=status,
         response_team=data.get("response_team"),
         date=data.get("date"),
-        affected_count=affected_count,
+        affected_display=affected_display,
     )
 
     db.session.add(disaster)
     db.session.flush()
     log_activity(
         action="Disaster Created",
-        details=f"{disaster.type} at {disaster.location}",
+        details=f"Admin created disaster: {disaster.type} at {disaster.location}",
         actor=g.current_user,
         disaster_id=disaster.id,
     )
@@ -85,38 +108,83 @@ def update_disaster(disaster_id):
         "location",
         "severity",
         "priority",
-        "status",
         "response_team",
         "date",
-        "affected_count",
     }
 
     if "priority" in data and data["priority"] not in ALLOWED_PRIORITIES:
         return jsonify({"error": "Invalid priority value"}), 400
-    if "status" in data and data["status"] not in ALLOWED_STATUSES:
-        return jsonify({"error": "Invalid status value"}), 400
 
     updated = False
+    previous_status = disaster.status
+    status_changed = False
+    if "status" in data:
+        new_status = data["status"]
+        if new_status not in ALLOWED_STATUSES:
+            return jsonify({"error": "Invalid status value"}), 400
+        if not can_transition_disaster_status(disaster.status, new_status):
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            f"Invalid lifecycle transition from {disaster.status} to {new_status}. "
+                            "Allowed flow: Created -> Active -> Recovering -> Closed."
+                        )
+                    }
+                ),
+                400,
+            )
+        if new_status == "Closed":
+            active_assignments = get_active_assignment_count(disaster.id)
+            if active_assignments > 0:
+                return (
+                    jsonify(
+                        {
+                            "error": (
+                                "Cannot close disaster while volunteers are still active "
+                                f"({active_assignments} active assignment(s))."
+                            )
+                        }
+                    ),
+                    400,
+                )
+            disaster.closed_at = utcnow()
+        else:
+            disaster.closed_at = None
+        disaster.status = new_status
+        status_changed = previous_status != new_status
+        updated = updated or status_changed
+
     for field in editable_fields:
         if field in data:
-            value = data[field]
-            if field == "affected_count":
-                try:
-                    value = max(int(value), 0)
-                except (TypeError, ValueError):
-                    return jsonify({"error": "affected_count must be a number"}), 400
-            setattr(disaster, field, value)
+            setattr(disaster, field, data[field])
             updated = True
 
     if not updated:
         return jsonify({"error": "No valid fields provided for update"}), 400
 
-    log_activity(
-        action="Disaster Updated",
-        details=f"{disaster.type} at {disaster.location}",
-        actor=g.current_user,
-        disaster_id=disaster.id,
-    )
+    if status_changed:
+        if disaster.status == "Closed":
+            log_activity(
+                action="Disaster Marked Closed",
+                details=f"{disaster.type} at {disaster.location}",
+                actor=g.current_user,
+                disaster_id=disaster.id,
+            )
+        else:
+            log_activity(
+                action="Disaster Lifecycle Updated",
+                details=f"{previous_status} -> {disaster.status} for {disaster.type} at {disaster.location}",
+                actor=g.current_user,
+                disaster_id=disaster.id,
+            )
+    else:
+        log_activity(
+            action="Disaster Updated",
+            details=f"{disaster.type} at {disaster.location}",
+            actor=g.current_user,
+            disaster_id=disaster.id,
+        )
     db.session.commit()
     return jsonify({"message": "Disaster updated successfully", "disaster": disaster.to_dict()}), 200
 
@@ -128,6 +196,12 @@ def delete_disaster(disaster_id):
     if not disaster:
         return jsonify({"error": "Disaster not found"}), 404
 
+    log_activity(
+        action="Disaster Deleted",
+        details=f"{disaster.type} at {disaster.location}",
+        actor=g.current_user,
+        disaster_id=disaster.id,
+    )
     db.session.delete(disaster)
     db.session.commit()
     return jsonify({"message": "Disaster deleted successfully"}), 200
@@ -170,6 +244,8 @@ def get_disaster_operations(disaster_id):
                 "allocated_resources": [allocation.to_dict() for allocation in allocations],
                 "progress_updates": [update.to_dict() for update in progress_updates],
                 "activity_logs": [log.to_dict() for log in activity_logs],
+                "workflow": build_disaster_workflow_flags(disaster),
+                "report_summary": build_disaster_report_summary(disaster),
             }
         ),
         200,
@@ -210,3 +286,74 @@ def add_progress_update(disaster_id):
 def get_activity_feed():
     logs = ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(30).all()
     return jsonify([log.to_dict() for log in logs]), 200
+
+
+@disaster_bp.route("/disasters/<int:disaster_id>/update-affected", methods=["PUT"])
+@require_roles("admin")
+def update_disaster_affected(disaster_id):
+    disaster = db.session.get(Disaster, disaster_id)
+    if not disaster:
+        return jsonify({"error": "Disaster not found"}), 404
+
+    data = request.get_json() or {}
+    affected_display, affected_error = validate_affected_display(data.get("affected_display"))
+    if affected_error:
+        return jsonify({"error": affected_error}), 400
+
+    previous_value = disaster.affected_display or ""
+    disaster.affected_display = affected_display
+
+    log_activity(
+        action="Affected People Updated",
+        details=(
+            f"{disaster.type} at {disaster.location}: "
+            f"'{previous_value or 'N/A'}' -> '{affected_display}'"
+        ),
+        actor=g.current_user,
+        disaster_id=disaster.id,
+    )
+    db.session.commit()
+    return jsonify({"message": "Affected people display updated", "disaster": disaster.to_dict()}), 200
+
+
+@disaster_bp.route("/disasters/<int:disaster_id>/report", methods=["GET"])
+@require_roles("admin")
+def get_disaster_report(disaster_id):
+    disaster = db.session.get(Disaster, disaster_id)
+    if not disaster:
+        return jsonify({"error": "Disaster not found"}), 404
+
+    summary = build_disaster_report_summary(disaster)
+    log_activity(
+        action="Report Generated",
+        details=f"Summary report generated for {disaster.type} at {disaster.location}",
+        actor=g.current_user,
+        disaster_id=disaster.id,
+    )
+    db.session.commit()
+    return jsonify({"message": "Report generated", "report": summary}), 200
+
+
+@disaster_bp.route("/disasters/<int:disaster_id>/report/pdf", methods=["GET"])
+@require_roles("admin")
+def download_disaster_report_pdf(disaster_id):
+    disaster = db.session.get(Disaster, disaster_id)
+    if not disaster:
+        return jsonify({"error": "Disaster not found"}), 404
+
+    pdf_bytes = build_disaster_report_pdf(disaster)
+    file_name = f"disaster-report-{disaster.id}.pdf"
+    log_activity(
+        action="Report Downloaded",
+        details=f"PDF report downloaded for {disaster.type} at {disaster.location}",
+        actor=g.current_user,
+        disaster_id=disaster.id,
+    )
+    db.session.commit()
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=file_name,
+    )

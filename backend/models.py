@@ -19,10 +19,14 @@ class Disaster(db.Model):
     location = db.Column(db.String(100), nullable=False)
     severity = db.Column(db.String(50))
     priority = db.Column(db.String(20), default="Moderate")
-    status = db.Column(db.String(50), default="Active")
+    status = db.Column(db.String(50), default="Created")
     response_team = db.Column(db.String(120))
     date = db.Column(db.String(50))
-    affected_count = db.Column(db.Integer, default=0)
+    affected_display = db.Column(db.String(50), default="0")
+    # Legacy column retained so existing rows remain valid.
+    legacy_affected_count = db.Column("affected_count", db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    closed_at = db.Column(db.DateTime)
 
     # Legacy relationships kept for backward compatibility with existing DB.
     legacy_resources = db.relationship("Resource", backref="legacy_disaster", lazy=True)
@@ -54,6 +58,9 @@ class Disaster(db.Model):
             for assignment in self.volunteer_assignments
             if assignment.status in {"Assigned", "Accepted", "In Progress"}
         ]
+        affected_display = self.affected_display
+        if affected_display is None or str(affected_display).strip() == "":
+            affected_display = str(self.legacy_affected_count or 0)
         return {
             "id": self.id,
             "type": self.type,
@@ -63,9 +70,11 @@ class Disaster(db.Model):
             "status": self.status,
             "response_team": self.response_team,
             "date": self.date,
-            "affected_count": self.affected_count or 0,
+            "affected_display": affected_display,
             "assigned_volunteers_count": len(active_assignments),
             "allocated_resources_count": len(self.resource_allocations),
+            "created_at": iso_or_none(self.created_at),
+            "closed_at": iso_or_none(self.closed_at),
         }
 
 

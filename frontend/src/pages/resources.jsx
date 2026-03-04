@@ -5,7 +5,19 @@ import { buildRoleHeaders, isAdmin } from "../utils/auth";
 
 const API_BASE_URL = "http://localhost:5000/api";
 
+async function getApiError(response, fallbackMessage) {
+  try {
+    const payload = await response.json();
+    return payload.error || payload.message || fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+}
+
 const getStockBadgeColor = (stockLevel) => {
+  if (stockLevel === "Exhausted") {
+    return "bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300";
+  }
   if (stockLevel === "Critical") {
     return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
   }
@@ -16,6 +28,7 @@ const getStockBadgeColor = (stockLevel) => {
 };
 
 const getStockBarColor = (stockLevel) => {
+  if (stockLevel === "Exhausted") return "bg-red-600";
   if (stockLevel === "Critical") return "bg-red-500";
   if (stockLevel === "Low") return "bg-orange-500";
   return "bg-green-500";
@@ -40,6 +53,8 @@ export default function Resources() {
   const [allocationHistory, setAllocationHistory] = useState([]);
   const [showResourceForm, setShowResourceForm] = useState(false);
   const [allocationFormFor, setAllocationFormFor] = useState(null);
+  const [resourceError, setResourceError] = useState("");
+  const [resourceNotice, setResourceNotice] = useState("");
 
   const [newResource, setNewResource] = useState({
     name: "",
@@ -123,9 +138,12 @@ export default function Resources() {
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
+  const exhaustedResources = inventory.filter((resource) => (resource.quantity || 0) <= 0);
 
   const handleSaveResource = async () => {
     if (!requireAuth() || !canManageResources) return;
+    setResourceError("");
+    setResourceNotice("");
     try {
       const payload = {
         ...newResource,
@@ -138,7 +156,10 @@ export default function Resources() {
         headers: buildRoleHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error("Failed to create resource");
+      if (!response.ok) {
+        const message = await getApiError(response, "Failed to create resource");
+        throw new Error(message);
+      }
       setShowResourceForm(false);
       setNewResource({
         name: "",
@@ -151,13 +172,17 @@ export default function Resources() {
       });
       await loadResources();
       await loadAllocationHistory();
+      setResourceNotice("Resource created successfully.");
     } catch (error) {
       console.error("Error creating resource:", error);
+      setResourceError(error.message || "Failed to create resource.");
     }
   };
 
   const handleAllocateResource = async (resourceId) => {
     if (!requireAuth() || !canManageResources) return;
+    setResourceError("");
+    setResourceNotice("");
     try {
       const response = await fetch(`${API_BASE_URL}/resources/${resourceId}/allocate`, {
         method: "POST",
@@ -168,13 +193,19 @@ export default function Resources() {
           notes: allocationDraft.notes,
         }),
       });
-      if (!response.ok) throw new Error("Failed to allocate resource");
+      if (!response.ok) {
+        const message = await getApiError(response, "Failed to allocate resource");
+        throw new Error(message);
+      }
+      const payload = await response.json();
       setAllocationFormFor(null);
       setAllocationDraft({ disaster_id: "", quantity: "", notes: "" });
       await loadResources();
       await loadAllocationHistory();
+      setResourceNotice(payload.alert || "Resource allocated successfully.");
     } catch (error) {
       console.error("Error allocating resource:", error);
+      setResourceError(error.message || "Failed to allocate resource.");
     }
   };
 
@@ -199,6 +230,22 @@ export default function Resources() {
           </button>
         )}
       </div>
+
+      {resourceError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+          {resourceError}
+        </div>
+      )}
+      {resourceNotice && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-300">
+          {resourceNotice}
+        </div>
+      )}
+      {exhaustedResources.length > 0 && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+          Resource exhaustion detected: {exhaustedResources.map((resource) => resource.name).join(", ")}.
+        </div>
+      )}
 
       {showResourceForm && canManageResources && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
@@ -330,6 +377,7 @@ export default function Resources() {
           {filteredInventory.map((item) => {
             const estimatedCapacity = Math.max(item.low_threshold * 3, item.quantity || 1);
             const percentage = Math.min(100, ((item.quantity || 0) / estimatedCapacity) * 100);
+            const stockLevel = (item.quantity || 0) <= 0 ? "Exhausted" : item.stock_level;
             return (
               <div
                 key={item.id}
@@ -345,8 +393,8 @@ export default function Resources() {
                       <p className="text-xs text-gray-500 dark:text-gray-400">{item.category || "General"}</p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStockBadgeColor(item.stock_level)}`}>
-                    {item.stock_level}
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStockBadgeColor(stockLevel)}`}>
+                    {stockLevel}
                   </span>
                 </div>
 
@@ -357,7 +405,7 @@ export default function Resources() {
                   </div>
                   <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                     <div
-                      className={`h-2 rounded-full ${getStockBarColor(item.stock_level)}`}
+                      className={`h-2 rounded-full ${getStockBarColor(stockLevel)}`}
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -395,8 +443,9 @@ export default function Resources() {
                         >
                           <option value="">Select disaster</option>
                           {disasters.map((disaster) => (
-                            <option key={disaster.id} value={disaster.id}>
+                            <option key={disaster.id} value={disaster.id} disabled={disaster.status === "Closed"}>
                               {disaster.type} - {disaster.location}
+                              {disaster.status === "Closed" ? " (Closed)" : ""}
                             </option>
                           ))}
                         </select>
@@ -416,7 +465,8 @@ export default function Resources() {
                           className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                         />
                         <button
-                          className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
+                          className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                          disabled={!allocationDraft.disaster_id || (item.quantity || 0) <= 0}
                           onClick={() => handleAllocateResource(item.id)}
                         >
                           Confirm Allocation

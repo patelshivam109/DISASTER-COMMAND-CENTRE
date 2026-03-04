@@ -34,9 +34,12 @@ def ensure_sqlite_columns():
             db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {ddl}"))
 
     add_column_if_missing("disaster", "priority", "VARCHAR(20) DEFAULT 'Moderate'")
-    add_column_if_missing("disaster", "status", "VARCHAR(50) DEFAULT 'Active'")
+    add_column_if_missing("disaster", "status", "VARCHAR(50) DEFAULT 'Created'")
     add_column_if_missing("disaster", "response_team", "VARCHAR(120)")
     add_column_if_missing("disaster", "affected_count", "INTEGER DEFAULT 0")
+    add_column_if_missing("disaster", "affected_display", "VARCHAR(50) DEFAULT '0'")
+    add_column_if_missing("disaster", "created_at", "DATETIME")
+    add_column_if_missing("disaster", "closed_at", "DATETIME")
     add_column_if_missing("volunteer", "hours_logged", "INTEGER DEFAULT 0")
     add_column_if_missing("volunteer", "verification_status", "VARCHAR(30) DEFAULT 'Pending'")
     add_column_if_missing("volunteer", "user_id", "INTEGER")
@@ -44,6 +47,20 @@ def ensure_sqlite_columns():
     add_column_if_missing("resource", "warehouse_info", "VARCHAR(150)")
     add_column_if_missing("resource", "low_threshold", "INTEGER DEFAULT 50")
     add_column_if_missing("resource", "critical_threshold", "INTEGER DEFAULT 20")
+    db.session.execute(
+        text(
+            "UPDATE disaster "
+            "SET created_at = CURRENT_TIMESTAMP "
+            "WHERE created_at IS NULL"
+        )
+    )
+    db.session.execute(
+        text(
+            "UPDATE disaster "
+            "SET affected_display = CAST(COALESCE(affected_count, 0) AS TEXT) "
+            "WHERE affected_display IS NULL OR TRIM(affected_display) = ''"
+        )
+    )
     db.session.commit()
 
 

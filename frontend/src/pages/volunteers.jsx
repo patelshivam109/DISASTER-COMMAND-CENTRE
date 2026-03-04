@@ -5,6 +5,15 @@ import { buildRoleHeaders, getUserRole, isAdmin } from "../utils/auth";
 
 const API_BASE_URL = "http://localhost:5000/api";
 
+async function getApiError(response, fallbackMessage) {
+  try {
+    const payload = await response.json();
+    return payload.error || payload.message || fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+}
+
 function formatDate(value) {
   if (!value) return "Just now";
   const parsed = new Date(value);
@@ -53,6 +62,8 @@ function AdminVolunteerView() {
     disaster_id: "",
     task_details: "",
   });
+  const [adminError, setAdminError] = useState("");
+  const [adminNotice, setAdminNotice] = useState("");
 
   const requireAuth = () => {
     const storedUser = localStorage.getItem("user");
@@ -80,6 +91,7 @@ function AdminVolunteerView() {
       setVolunteers(volData);
       setDisasters(disData.filter((item) => item.type !== "General"));
       setAssignments(assignData);
+      setAdminError("");
     } catch (error) {
       console.error("Error loading volunteer admin data:", error);
       setVolunteers([]);
@@ -104,6 +116,7 @@ function AdminVolunteerView() {
 
   const pendingVolunteers = volunteers.filter((volunteer) => volunteer.verification_status === "Pending").length;
   const totalHours = volunteers.reduce((sum, volunteer) => sum + (volunteer.hours_logged || 0), 0);
+  const selectedDisaster = disasters.find((item) => String(item.id) === String(assignmentDraft.disaster_id));
 
   return (
     <div className="space-y-6 page-fade-in">
@@ -124,6 +137,17 @@ function AdminVolunteerView() {
           {showForm ? "Cancel" : "Invite Volunteer"}
         </button>
       </div>
+
+      {adminError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+          {adminError}
+        </div>
+      )}
+      {adminNotice && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-300">
+          {adminNotice}
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
@@ -180,13 +204,18 @@ function AdminVolunteerView() {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
               onClick={async () => {
                 if (!requireAuth()) return;
+                setAdminError("");
+                setAdminNotice("");
                 try {
                   const response = await fetch(`${API_BASE_URL}/volunteers`, {
                     method: "POST",
                     headers: buildRoleHeaders({ "Content-Type": "application/json" }),
                     body: JSON.stringify(newVolunteer),
                   });
-                  if (!response.ok) throw new Error("Failed to create volunteer");
+                  if (!response.ok) {
+                    const message = await getApiError(response, "Failed to create volunteer");
+                    throw new Error(message);
+                  }
                   setShowForm(false);
                   setNewVolunteer({
                     name: "",
@@ -195,8 +224,10 @@ function AdminVolunteerView() {
                     verification_status: "Pending",
                   });
                   await loadData();
+                  setAdminNotice("Volunteer profile created.");
                 } catch (error) {
                   console.error("Error creating volunteer:", error);
+                  setAdminError(error.message || "Failed to create volunteer");
                 }
               }}
             >
@@ -288,11 +319,18 @@ function AdminVolunteerView() {
                         <button
                           className="text-xs text-green-600 hover:underline"
                           onClick={async () => {
-                            await fetch(`${API_BASE_URL}/volunteers/${volunteer.id}`, {
+                            setAdminError("");
+                            setAdminNotice("");
+                            const response = await fetch(`${API_BASE_URL}/volunteers/${volunteer.id}`, {
                               method: "PATCH",
                               headers: buildRoleHeaders({ "Content-Type": "application/json" }),
                               body: JSON.stringify({ verification_status: "Verified" }),
                             });
+                            if (!response.ok) {
+                              setAdminError(await getApiError(response, "Failed to verify volunteer"));
+                              return;
+                            }
+                            setAdminNotice("Volunteer verified.");
                             await loadData();
                           }}
                         >
@@ -329,6 +367,9 @@ function AdminVolunteerView() {
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedVolunteer.name}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{selectedVolunteer.skills || "General"}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Verification: {selectedVolunteer.verification_status || "Pending"}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -339,8 +380,9 @@ function AdminVolunteerView() {
             >
               <option value="">Select disaster</option>
               {disasters.map((disaster) => (
-                <option key={disaster.id} value={disaster.id}>
+                <option key={disaster.id} value={disaster.id} disabled={disaster.status === "Closed"}>
                   {disaster.type} - {disaster.location}
+                  {disaster.status === "Closed" ? " (Closed)" : ""}
                 </option>
               ))}
             </select>
@@ -352,10 +394,17 @@ function AdminVolunteerView() {
               className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
             />
             <button
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={
+                !assignmentDraft.disaster_id ||
+                selectedVolunteer.verification_status !== "Verified" ||
+                selectedDisaster?.status === "Closed"
+              }
               onClick={async () => {
                 if (!assignmentDraft.disaster_id) return;
-                await fetch(`${API_BASE_URL}/volunteers/${selectedVolunteer.id}/assignments`, {
+                setAdminError("");
+                setAdminNotice("");
+                const response = await fetch(`${API_BASE_URL}/volunteers/${selectedVolunteer.id}/assignments`, {
                   method: "POST",
                   headers: buildRoleHeaders({ "Content-Type": "application/json" }),
                   body: JSON.stringify({
@@ -363,13 +412,29 @@ function AdminVolunteerView() {
                     task_details: assignmentDraft.task_details,
                   }),
                 });
+                if (!response.ok) {
+                  setAdminError(await getApiError(response, "Failed to assign volunteer"));
+                  return;
+                }
                 setAssignmentDraft({ disaster_id: "", task_details: "" });
+                setAdminNotice("Volunteer assignment created.");
                 await loadData();
               }}
             >
               Assign Volunteer
             </button>
           </div>
+
+          {selectedVolunteer.verification_status !== "Verified" && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Volunteer must be verified before assignment.
+            </p>
+          )}
+          {selectedDisaster?.status === "Closed" && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Cannot assign volunteers to a closed disaster.
+            </p>
+          )}
 
           <div className="rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium">
@@ -390,10 +455,15 @@ function AdminVolunteerView() {
                   <button
                     className="text-xs text-red-600 hover:underline"
                     onClick={async () => {
-                      await fetch(`${API_BASE_URL}/assignments/${assignment.id}`, {
+                      const response = await fetch(`${API_BASE_URL}/assignments/${assignment.id}`, {
                         method: "DELETE",
                         headers: buildRoleHeaders(),
                       });
+                      if (!response.ok) {
+                        setAdminError(await getApiError(response, "Failed to remove assignment"));
+                        return;
+                      }
+                      setAdminNotice("Assignment removed.");
                       await loadData();
                     }}
                   >

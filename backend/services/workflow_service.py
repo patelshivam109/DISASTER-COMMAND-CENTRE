@@ -1,4 +1,7 @@
-from models import ActivityLog, Disaster, Volunteer, db
+from models import ActivityLog, Disaster, Volunteer, VolunteerAssignment, db
+
+DISASTER_LIFECYCLE = ("Created", "Active", "Recovering", "Closed")
+ACTIVE_ASSIGNMENT_STATUSES = {"Assigned", "Accepted", "In Progress"}
 
 
 def ensure_general_disaster():
@@ -14,7 +17,7 @@ def ensure_general_disaster():
         status="Active",
         response_team="Default",
         date=None,
-        affected_count=0,
+        affected_display="0",
     )
     db.session.add(disaster)
     db.session.commit()
@@ -43,6 +46,56 @@ def ensure_volunteer_profile_for_user(user):
     db.session.add(profile)
     db.session.commit()
     return profile
+
+
+def can_transition_disaster_status(current_status, new_status):
+    if current_status == new_status:
+        return True
+
+    if current_status not in DISASTER_LIFECYCLE or new_status not in DISASTER_LIFECYCLE:
+        return False
+
+    current_index = DISASTER_LIFECYCLE.index(current_status)
+    new_index = DISASTER_LIFECYCLE.index(new_status)
+    return new_index == current_index + 1
+
+
+def get_active_assignment_count(disaster_id):
+    return (
+        VolunteerAssignment.query.filter_by(disaster_id=disaster_id)
+        .filter(VolunteerAssignment.status.in_(list(ACTIVE_ASSIGNMENT_STATUSES)))
+        .count()
+    )
+
+
+def build_disaster_workflow_flags(disaster):
+    assignments = VolunteerAssignment.query.filter_by(disaster_id=disaster.id).all()
+    active_assignments = [assignment for assignment in assignments if assignment.status in ACTIVE_ASSIGNMENT_STATUSES]
+    completed_assignments = [assignment for assignment in assignments if assignment.status == "Completed"]
+
+    has_resource_exhaustion = any(
+        allocation.resource and (allocation.resource.quantity or 0) <= 0
+        for allocation in disaster.resource_allocations
+    )
+
+    suggestions = []
+    alerts = []
+
+    if disaster.status == "Active" and assignments and len(completed_assignments) == len(assignments):
+        suggestions.append("All tasks are completed. Consider moving this disaster to Recovering.")
+
+    if has_resource_exhaustion:
+        alerts.append("Some allocated resources are exhausted and require replenishment.")
+
+    return {
+        "lifecycle": list(DISASTER_LIFECYCLE),
+        "can_allocate_resources": disaster.status != "Closed",
+        "can_assign_volunteers": disaster.status != "Closed",
+        "active_assignments_count": len(active_assignments),
+        "resource_exhausted": has_resource_exhaustion,
+        "suggestions": suggestions,
+        "alerts": alerts,
+    }
 
 
 def log_activity(
