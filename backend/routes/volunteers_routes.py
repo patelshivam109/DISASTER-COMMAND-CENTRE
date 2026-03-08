@@ -1,6 +1,10 @@
-from flask import Blueprint, g, jsonify, request
+import secrets
 
-from models import Disaster, Volunteer, VolunteerAssignment, db, utcnow
+from flask import Blueprint, g, jsonify, request
+from sqlalchemy import func, or_
+from werkzeug.security import generate_password_hash
+
+from models import Disaster, User, Volunteer, VolunteerAssignment, db, utcnow
 from routes.access_control import require_auth, require_roles
 from services.workflow_service import (
     ensure_general_disaster,
@@ -11,6 +15,32 @@ from services.workflow_service import (
 volunteer_bp = Blueprint("volunteer_bp", __name__)
 
 VERIFICATION_STATUSES = {"Pending", "Verified"}
+
+
+def normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def normalize_phone(value):
+    return "".join(ch for ch in str(value or "") if ch.isdigit())
+
+
+def build_username_seed(name, email, phone):
+    if email:
+        return email.split("@")[0]
+    if phone:
+        return phone
+    return "".join(ch for ch in name.lower() if ch.isalnum()) or "volunteer"
+
+
+def ensure_unique_username(base_value):
+    base = "".join(ch for ch in (base_value or "").lower() if ch.isalnum() or ch in "._-") or "volunteer"
+    candidate = base
+    index = 1
+    while User.query.filter_by(username=candidate).first():
+        candidate = f"{base}{index}"
+        index += 1
+    return candidate
 
 
 def parse_non_negative_int(value, field_name):
@@ -35,8 +65,11 @@ def get_current_volunteer_profile():
 def add_volunteer():
     data = request.get_json() or {}
 
-    if not data.get("name") or not data.get("phone"):
-        return jsonify({"error": "Name and phone are required"}), 400
+    name = (data.get("name") or "").strip()
+    email = normalize_email(data.get("email"))
+    phone = normalize_phone(data.get("phone"))
+    if not name or (not email and not phone):
+        return jsonify({"error": "Name and at least one contact method (email or phone) are required"}), 400
 
     disaster_id = data.get("disaster_id")
     if disaster_id:
@@ -55,19 +88,89 @@ def add_volunteer():
     except (TypeError, ValueError):
         hours_logged = 0
 
-    volunteer = Volunteer(
-        name=data["name"],
-        phone=data["phone"],
-        skills=data.get("skills"),
-        availability=data.get("availability", "Available"),
-        verification_status=verification_status,
-        hours_logged=hours_logged,
-        disaster_id=disaster.id,
-        user_id=data.get("user_id"),
-    )
+    email_owner = User.query.filter(func.lower(User.email) == email).first() if email else None
+    phone_owner = User.query.filter(User.phone == phone).first() if phone else None
+    if email_owner and phone_owner and email_owner.id != phone_owner.id:
+        return jsonify({"error": "Provided email and phone belong to different accounts"}), 409
 
-    db.session.add(volunteer)
-    db.session.flush()
+    user = email_owner or phone_owner
+    if user and (user.role or "").lower() == "admin":
+        return jsonify({"error": "Cannot create volunteer profile for an admin account"}), 409
+
+    if not user:
+        temporary_password = secrets.token_urlsafe(18)
+        user = User(
+            username=ensure_unique_username(build_username_seed(name, email, phone)),
+            name=name,
+            email=email or None,
+            phone=phone or None,
+            password_hash=generate_password_hash(temporary_password),
+            role="volunteer",
+            verified=verification_status == "Verified",
+            password_initialized=False,
+        )
+        db.session.add(user)
+        db.session.flush()
+    else:
+        user.name = name
+        if email:
+            user.email = email
+        if phone:
+            user.phone = phone
+        user.role = "volunteer"
+        user.verified = verification_status == "Verified"
+
+    volunteer = Volunteer.query.filter_by(user_id=user.id).first()
+    if volunteer:
+        volunteer.name = name
+        volunteer.email = email or user.email
+        volunteer.phone = phone or user.phone or "N/A"
+        volunteer.skills = data.get("skills")
+        volunteer.availability = data.get("availability", volunteer.availability or "Available")
+        volunteer.verification_status = verification_status
+        volunteer.hours_logged = hours_logged
+        volunteer.disaster_id = disaster.id
+        action_message = "Volunteer updated successfully"
+        status_code = 200
+    else:
+        profile_filters = [Volunteer.user_id.is_(None)]
+        contact_filters = []
+        if email:
+            contact_filters.append(func.lower(Volunteer.email) == email)
+        if phone:
+            contact_filters.append(Volunteer.phone == phone)
+        if contact_filters:
+            volunteer = Volunteer.query.filter(*profile_filters).filter(or_(*contact_filters)).first()
+
+        if volunteer:
+            volunteer.name = name
+            volunteer.email = email or volunteer.email
+            volunteer.phone = phone or volunteer.phone or "N/A"
+            volunteer.skills = data.get("skills")
+            volunteer.availability = data.get("availability", volunteer.availability or "Available")
+            volunteer.verification_status = verification_status
+            volunteer.hours_logged = hours_logged
+            volunteer.disaster_id = disaster.id
+            volunteer.user_id = user.id
+            action_message = "Volunteer linked successfully"
+            status_code = 200
+        else:
+            volunteer = Volunteer(
+                name=name,
+                email=email or user.email,
+                phone=phone or user.phone or "N/A",
+                skills=data.get("skills"),
+                availability=data.get("availability", "Available"),
+                verification_status=verification_status,
+                hours_logged=hours_logged,
+                disaster_id=disaster.id,
+                user_id=user.id,
+            )
+            db.session.add(volunteer)
+            db.session.flush()
+            action_message = "Volunteer added successfully"
+            status_code = 201
+
     log_activity(
         action="Volunteer Added",
         details=f"{volunteer.name} profile created",
@@ -76,7 +179,7 @@ def add_volunteer():
     )
     db.session.commit()
 
-    return jsonify({"message": "Volunteer added successfully", "volunteer": volunteer.to_dict()}), 201
+    return jsonify({"message": action_message, "volunteer": volunteer.to_dict()}), status_code
 
 
 @volunteer_bp.route("/volunteers", methods=["GET"])
@@ -101,7 +204,7 @@ def get_my_volunteer_profile():
         return error
 
     assignments = (
-        VolunteerAssignment.query.filter_by(volunteer_id=volunteer.id)
+        VolunteerAssignment.query.filter_by(volunteer_id=g.current_user.id)
         .order_by(VolunteerAssignment.assigned_at.desc())
         .all()
     )
@@ -124,13 +227,15 @@ def update_volunteer(volunteer_id):
         return jsonify({"error": "Volunteer not found"}), 404
 
     data = request.get_json() or {}
-    editable_fields = {"name", "phone", "skills", "availability"}
+    editable_fields = {"name", "email", "phone", "skills", "availability"}
     updated = False
 
     if "verification_status" in data:
         if data["verification_status"] not in VERIFICATION_STATUSES:
             return jsonify({"error": "Invalid verification_status"}), 400
         volunteer.verification_status = data["verification_status"]
+        if volunteer.user:
+            volunteer.user.verified = data["verification_status"] == "Verified"
         updated = True
 
     if "hours_logged" in data:
@@ -149,7 +254,22 @@ def update_volunteer(volunteer_id):
 
     for field in editable_fields:
         if field in data:
-            setattr(volunteer, field, data[field])
+            if field == "email":
+                value = normalize_email(data[field])
+                volunteer.email = value or None
+                if volunteer.user and value:
+                    volunteer.user.email = value
+            elif field == "phone":
+                value = normalize_phone(data[field])
+                volunteer.phone = value or "N/A"
+                if volunteer.user and value:
+                    volunteer.user.phone = value
+            elif field == "name":
+                volunteer.name = data[field]
+                if volunteer.user:
+                    volunteer.user.name = data[field]
+            else:
+                setattr(volunteer, field, data[field])
             updated = True
 
     if not updated:
@@ -183,6 +303,8 @@ def assign_volunteer(volunteer_id):
     volunteer = db.session.get(Volunteer, volunteer_id)
     if not volunteer:
         return jsonify({"error": "Volunteer not found"}), 404
+    if not volunteer.user_id:
+        return jsonify({"error": "Volunteer account is not linked. Add email/phone and link user first."}), 400
 
     data = request.get_json() or {}
     disaster = db.session.get(Disaster, data.get("disaster_id"))
@@ -196,13 +318,13 @@ def assign_volunteer(volunteer_id):
     task_details = (data.get("task_details") or "").strip() or "General field support"
 
     assignment = VolunteerAssignment.query.filter_by(
-        volunteer_id=volunteer.id, disaster_id=disaster.id
+        volunteer_id=volunteer.user_id, disaster_id=disaster.id
     ).first()
     if assignment:
         return jsonify({"error": "Volunteer is already assigned to this disaster"}), 409
 
     assignment = VolunteerAssignment(
-        volunteer_id=volunteer.id,
+        volunteer_id=volunteer.user_id,
         disaster_id=disaster.id,
         task_details=task_details,
         status="Assigned",
@@ -234,7 +356,7 @@ def get_assignments():
     if error:
         return error
     assignments = (
-        VolunteerAssignment.query.filter_by(volunteer_id=volunteer.id)
+        VolunteerAssignment.query.filter_by(volunteer_id=g.current_user.id)
         .order_by(VolunteerAssignment.assigned_at.desc())
         .all()
     )
@@ -250,7 +372,7 @@ def remove_assignment(assignment_id):
 
     volunteer_name = assignment.volunteer.name if assignment.volunteer else "Volunteer"
     disaster_id = assignment.disaster_id
-    volunteer_id = assignment.volunteer_id
+    volunteer_profile_id = assignment.volunteer.id if assignment.volunteer else None
 
     db.session.delete(assignment)
     log_activity(
@@ -258,7 +380,7 @@ def remove_assignment(assignment_id):
         details=f"{volunteer_name} removed from disaster assignment",
         actor=g.current_user,
         disaster_id=disaster_id,
-        volunteer_id=volunteer_id,
+        volunteer_id=volunteer_profile_id,
     )
     db.session.commit()
     return jsonify({"message": "Assignment removed"}), 200
@@ -274,7 +396,7 @@ def respond_to_assignment(assignment_id):
     assignment = db.session.get(VolunteerAssignment, assignment_id)
     if not assignment:
         return jsonify({"error": "Assignment not found"}), 404
-    if assignment.volunteer_id != volunteer.id:
+    if assignment.volunteer_id != g.current_user.id:
         return jsonify({"error": "Forbidden: assignment does not belong to you"}), 403
 
     data = request.get_json() or {}
@@ -311,7 +433,7 @@ def log_assignment_hours(assignment_id):
     assignment = db.session.get(VolunteerAssignment, assignment_id)
     if not assignment:
         return jsonify({"error": "Assignment not found"}), 404
-    if assignment.volunteer_id != volunteer.id:
+    if assignment.volunteer_id != g.current_user.id:
         return jsonify({"error": "Forbidden: assignment does not belong to you"}), 403
 
     data = request.get_json() or {}
@@ -347,7 +469,7 @@ def complete_assignment(assignment_id):
     assignment = db.session.get(VolunteerAssignment, assignment_id)
     if not assignment:
         return jsonify({"error": "Assignment not found"}), 404
-    if assignment.volunteer_id != volunteer.id:
+    if assignment.volunteer_id != g.current_user.id:
         return jsonify({"error": "Forbidden: assignment does not belong to you"}), 403
 
     assignment.status = "Completed"

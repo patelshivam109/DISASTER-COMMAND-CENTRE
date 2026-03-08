@@ -131,7 +131,7 @@ def get_admin_dashboard():
 def get_volunteer_dashboard():
     volunteer = ensure_volunteer_profile_for_user(g.current_user)
     assignments = (
-        VolunteerAssignment.query.filter_by(volunteer_id=volunteer.id)
+        VolunteerAssignment.query.filter_by(volunteer_id=g.current_user.id)
         .order_by(VolunteerAssignment.assigned_at.desc())
         .all()
     )

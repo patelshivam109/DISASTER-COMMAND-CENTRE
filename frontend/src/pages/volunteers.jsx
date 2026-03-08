@@ -54,6 +54,7 @@ function AdminVolunteerView() {
   const [showForm, setShowForm] = useState(false);
   const [newVolunteer, setNewVolunteer] = useState({
     name: "",
+    email: "",
     phone: "",
     skills: "",
     verification_status: "Pending",
@@ -111,7 +112,9 @@ function AdminVolunteerView() {
 
   const selectedVolunteerAssignments = useMemo(() => {
     if (!selectedVolunteer) return [];
-    return assignments.filter((assignment) => assignment.volunteer_id === selectedVolunteer.id);
+    return assignments.filter(
+      (assignment) => String(assignment.volunteer_id) === String(selectedVolunteer.user_id)
+    );
   }, [assignments, selectedVolunteer]);
 
   const pendingVolunteers = volunteers.filter((volunteer) => volunteer.verification_status === "Pending").length;
@@ -151,7 +154,7 @@ function AdminVolunteerView() {
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name</label>
               <input
@@ -159,6 +162,15 @@ function AdminVolunteerView() {
                 className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
                 value={newVolunteer.name}
                 onChange={(e) => setNewVolunteer({ ...newVolunteer, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email</label>
+              <input
+                type="email"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+                value={newVolunteer.email}
+                onChange={(e) => setNewVolunteer({ ...newVolunteer, email: e.target.value })}
               />
             </div>
             <div>
@@ -206,6 +218,10 @@ function AdminVolunteerView() {
                 if (!requireAuth()) return;
                 setAdminError("");
                 setAdminNotice("");
+                if (!newVolunteer.name.trim() || (!newVolunteer.email.trim() && !newVolunteer.phone.trim())) {
+                  setAdminError("Provide name and either email or phone.");
+                  return;
+                }
                 try {
                   const response = await fetch(`${API_BASE_URL}/volunteers`, {
                     method: "POST",
@@ -219,12 +235,13 @@ function AdminVolunteerView() {
                   setShowForm(false);
                   setNewVolunteer({
                     name: "",
+                    email: "",
                     phone: "",
                     skills: "",
                     verification_status: "Pending",
                   });
                   await loadData();
-                  setAdminNotice("Volunteer profile created.");
+                  setAdminNotice("Volunteer profile saved.");
                 } catch (error) {
                   console.error("Error creating volunteer:", error);
                   setAdminError(error.message || "Failed to create volunteer");
@@ -303,7 +320,9 @@ function AdminVolunteerView() {
                   <tr key={volunteer.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{volunteer.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{volunteer.phone}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {volunteer.email || "No email"} | {volunteer.phone || "No phone"}
+                      </p>
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-600 dark:text-gray-300">
                       {volunteer.skills || "General"}
@@ -367,6 +386,9 @@ function AdminVolunteerView() {
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedVolunteer.name}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{selectedVolunteer.skills || "General"}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Contact: {selectedVolunteer.email || "No email"} | {selectedVolunteer.phone || "No phone"}
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Verification: {selectedVolunteer.verification_status || "Pending"}
             </p>
@@ -512,7 +534,7 @@ function VolunteerTaskView() {
   return (
     <div className="space-y-6 page-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">My Volunteer Tasks</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">My Assignments</h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
           View assigned disasters, respond to tasks, log hours, and mark completion.
         </p>
@@ -541,7 +563,7 @@ function VolunteerTaskView() {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Assigned Tasks</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">My Assignment List</h2>
         </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {assignments.length === 0 && <p className="p-4 text-sm text-gray-500">No assignments yet.</p>}

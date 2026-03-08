@@ -8,8 +8,10 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationTimeoutRef = useRef(null);
-  const [username, setUsername] = useState("");
+  const [loginInput, setLoginInput] = useState("");
   const [password, setPassword] = useState("");
+  const [loginAs, setLoginAs] = useState("volunteer");
+  const [adminCode, setAdminCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,9 +32,9 @@ export default function Login() {
     .join(" ");
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem("rememberedUsername");
-    if (storedUsername) {
-      setUsername(storedUsername);
+    const storedLogin = localStorage.getItem("rememberedLogin");
+    if (storedLogin) {
+      setLoginInput(storedLogin);
       setRememberMe(true);
     }
   }, []);
@@ -62,8 +64,12 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!username || !password) {
-      setError("Please enter both username and password.");
+    if (!loginInput || !password) {
+      setError("Please enter your login and password.");
+      return;
+    }
+    if (loginAs === "admin" && !adminCode) {
+      setError("Admin code is required for admin login.");
       return;
     }
 
@@ -73,7 +79,11 @@ export default function Login() {
       const res = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          login: loginInput,
+          password,
+          admin_code: loginAs === "admin" ? adminCode : "",
+        }),
       });
 
       const data = await res.json();
@@ -87,9 +97,9 @@ export default function Login() {
       localStorage.setItem("userRole", data.user.role);
 
       if (rememberMe) {
-        localStorage.setItem("rememberedUsername", username);
+        localStorage.setItem("rememberedLogin", loginInput);
       } else {
-        localStorage.removeItem("rememberedUsername");
+        localStorage.removeItem("rememberedLogin");
       }
 
       const redirectTo = location.state?.from || "/";
@@ -104,7 +114,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 px-4">
       <div className={`max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${motionClass}`}>
-        {/* Left hero section */}
         <div className="space-y-6 hidden md:block">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-600 rounded-lg text-white shrink-0 shadow-lg shadow-blue-500/30">
@@ -124,26 +133,11 @@ export default function Login() {
             <span className="block text-emerald-400">Disaster Relief Console</span>
           </h1>
           <p className="text-sm text-slate-300 max-w-md">
-            Coordinate disasters, resources, and volunteers from a single, powerful dashboard designed for crisis response teams.
+            Coordinate disasters, resources, and volunteers from a single, powerful dashboard designed for
+            crisis response teams.
           </p>
-
-          <div className="grid grid-cols-3 gap-3 text-xs text-slate-300">
-            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
-              <p className="font-semibold text-emerald-400 mb-1">Admins</p>
-              <p>Control incidents, allocate supplies, and manage teams securely.</p>
-            </div>
-            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
-              <p className="font-semibold text-emerald-400 mb-1">Volunteers</p>
-              <p>View operations and stay aligned with the response plan.</p>
-            </div>
-            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
-              <p className="font-semibold text-emerald-400 mb-1">Secure</p>
-              <p>Role-based access keeps critical actions in the right hands.</p>
-            </div>
-          </div>
         </div>
 
-        {/* Right auth card */}
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-8 space-y-6">
           {infoMessage && (
             <p className="text-xs text-amber-300 bg-amber-950/40 border border-amber-900/60 rounded-md px-3 py-2">
@@ -153,24 +147,53 @@ export default function Login() {
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">Welcome back</h2>
             <p className="text-xs text-slate-400">
-              Sign in with your admin or volunteer account to continue.
+              Volunteers can sign in with email or phone. Admin login requires email and admin code.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Account Type</label>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setLoginAs("volunteer")}
+                  className={`px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                    loginAs === "volunteer"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                      : "border-slate-600 text-slate-300"
+                  }`}
+                >
+                  Volunteer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginAs("admin")}
+                  className={`px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                    loginAs === "admin"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                      : "border-slate-600 text-slate-300"
+                  }`}
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
+
+            <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Username <span className="text-red-400">*</span>
+                {loginAs === "admin" ? "Admin Email" : "Email or Phone"} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={loginInput}
+                onChange={(e) => setLoginInput(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 autoComplete="username"
-                placeholder="e.g. ops-admin"
+                placeholder={loginAs === "admin" ? "admin@relief.org" : "email or phone"}
               />
             </div>
+
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
                 Password <span className="text-red-400">*</span>
@@ -182,7 +205,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 pr-16"
                   autoComplete="current-password"
-                  placeholder="••••••••"
+                  placeholder="********"
                 />
                 <button
                   type="button"
@@ -193,6 +216,21 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            {loginAs === "admin" && (
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Admin Authorization Code <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="Enter admin code"
+                />
+              </div>
+            )}
 
             <div className="flex items-center justify-between text-xs text-slate-300">
               <label className="inline-flex items-center gap-2">
@@ -243,5 +281,3 @@ export default function Login() {
     </div>
   );
 }
-
-

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import foreign
 
 db = SQLAlchemy()
 
@@ -126,7 +127,8 @@ class Resource(db.Model):
 class Volunteer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20), nullable=False, default="N/A")
     skills = db.Column(db.String(200))
     availability = db.Column(db.String(50), default="Available")
     verification_status = db.Column(db.String(30), default="Pending")
@@ -139,9 +141,9 @@ class Volunteer(db.Model):
     user = db.relationship("User", back_populates="volunteer_profile")
     assignments = db.relationship(
         "VolunteerAssignment",
-        back_populates="volunteer",
-        cascade="all, delete-orphan",
+        primaryjoin="foreign(VolunteerAssignment.volunteer_id) == Volunteer.user_id",
         lazy=True,
+        viewonly=True,
     )
     activity_logs = db.relationship("ActivityLog", back_populates="volunteer", lazy=True)
 
@@ -149,6 +151,7 @@ class Volunteer(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "email": self.email,
             "phone": self.phone,
             "skills": self.skills,
             "availability": self.availability,
@@ -162,8 +165,13 @@ class Volunteer(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    name = db.Column(db.String(120))
+    email = db.Column(db.String(120), unique=True)
+    phone = db.Column(db.String(20), unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="volunteer")
+    verified = db.Column(db.Boolean, nullable=False, default=False)
+    password_initialized = db.Column(db.Boolean, nullable=False, default=True)
 
     volunteer_profile = db.relationship("Volunteer", back_populates="user", uselist=False)
 
@@ -171,7 +179,11 @@ class User(db.Model):
         return {
             "id": self.id,
             "username": self.username,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
             "role": self.role,
+            "verified": self.verified,
             "volunteer_id": self.volunteer_profile.id if self.volunteer_profile else None,
         }
 
@@ -206,7 +218,8 @@ class ResourceAllocation(db.Model):
 
 class VolunteerAssignment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    volunteer_id = db.Column(db.Integer, db.ForeignKey("volunteer.id"), nullable=False)
+    # Stores user.id for the assigned volunteer.
+    volunteer_id = db.Column(db.Integer, nullable=False)
     disaster_id = db.Column(db.Integer, db.ForeignKey("disaster.id"), nullable=False)
     task_details = db.Column(db.String(250))
     status = db.Column(db.String(30), default="Assigned")
@@ -215,7 +228,18 @@ class VolunteerAssignment(db.Model):
     assigned_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     completed_at = db.Column(db.DateTime)
 
-    volunteer = db.relationship("Volunteer", back_populates="assignments")
+    volunteer_user = db.relationship(
+        "User",
+        primaryjoin="foreign(VolunteerAssignment.volunteer_id) == User.id",
+        uselist=False,
+        viewonly=True,
+    )
+    volunteer = db.relationship(
+        "Volunteer",
+        primaryjoin="foreign(VolunteerAssignment.volunteer_id) == Volunteer.user_id",
+        uselist=False,
+        viewonly=True,
+    )
     disaster = db.relationship("Disaster", back_populates="volunteer_assignments")
 
     __table_args__ = (
@@ -223,10 +247,28 @@ class VolunteerAssignment(db.Model):
     )
 
     def to_dict(self):
+        volunteer_name = None
+        volunteer_email = None
+        volunteer_phone = None
+        volunteer_profile_id = None
+
+        if self.volunteer_user:
+            volunteer_name = self.volunteer_user.name or self.volunteer_user.username
+            volunteer_email = self.volunteer_user.email
+            volunteer_phone = self.volunteer_user.phone
+        if self.volunteer:
+            volunteer_name = volunteer_name or self.volunteer.name
+            volunteer_email = volunteer_email or self.volunteer.email
+            volunteer_phone = volunteer_phone or self.volunteer.phone
+            volunteer_profile_id = self.volunteer.id
+
         return {
             "id": self.id,
             "volunteer_id": self.volunteer_id,
-            "volunteer_name": self.volunteer.name if self.volunteer else None,
+            "volunteer_profile_id": volunteer_profile_id,
+            "volunteer_name": volunteer_name,
+            "volunteer_email": volunteer_email,
+            "volunteer_phone": volunteer_phone,
             "disaster_id": self.disaster_id,
             "disaster_label": (
                 f"{self.disaster.type} - {self.disaster.location}" if self.disaster else None

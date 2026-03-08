@@ -1,57 +1,158 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy import func, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models import db, User
+from models import User, db
 from services.workflow_service import ensure_volunteer_profile_for_user
 
 
 auth_bp = Blueprint("auth_bp", __name__)
+ADMIN_AUTH_CODE = "ADIO123"
+
+
+def normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def normalize_phone(value):
+    return "".join(ch for ch in str(value or "") if ch.isdigit())
+
+
+def first_non_empty(*values):
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def ensure_unique_username(base_value):
+    base = "".join(ch for ch in (base_value or "").lower() if ch.isalnum() or ch in "._-")
+    if not base:
+        base = "volunteer"
+
+    candidate = base
+    suffix = 1
+    while User.query.filter_by(username=candidate).first():
+        candidate = f"{base}{suffix}"
+        suffix += 1
+    return candidate
+
+
+def find_user_by_login(login_value):
+    email = normalize_email(login_value)
+    phone = normalize_phone(login_value)
+
+    filters = []
+    if email:
+        filters.append(func.lower(User.email) == email)
+    if phone:
+        filters.append(User.phone == phone)
+
+    if not filters:
+        return None
+    return User.query.filter(or_(*filters)).first()
+
+
+def find_user_by_email(email_value):
+    email = normalize_email(email_value)
+    if not email:
+        return None
+    return User.query.filter(func.lower(User.email) == email).first()
+
+
+def find_user_by_phone(phone_value):
+    phone = normalize_phone(phone_value)
+    if not phone:
+        return None
+    return User.query.filter(User.phone == phone).first()
 
 
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json() or {}
 
-    username = data.get("username", "").strip()
+    name = data.get("name", "").strip()
+    email = normalize_email(data.get("email"))
+    phone = normalize_phone(data.get("phone"))
     password = data.get("password", "").strip()
-    role = data.get("role", "volunteer")
+    skills = (data.get("skills") or "").strip() or None
 
-    if not username or not password:
-        return jsonify({"error": "Username and password are required"}), 400
+    if not name or not email or not phone or not password:
+        return jsonify({"error": "Name, email, phone number, and password are required"}), 400
 
-    if role not in ("admin", "volunteer"):
-        role = "volunteer"
+    email_owner = find_user_by_email(email)
+    phone_owner = find_user_by_phone(phone)
+    if email_owner and phone_owner and email_owner.id != phone_owner.id:
+        return jsonify({"error": "Email and phone belong to different accounts"}), 409
 
-    existing = User.query.filter_by(username=username).first()
-    if existing:
-        return jsonify({"error": "Username already exists"}), 409
+    existing = email_owner or phone_owner
+    if existing and (existing.role or "").lower() == "admin":
+        return jsonify({"error": "Admin accounts cannot be created from public signup"}), 403
 
-    user = User(
-        username=username,
-        password_hash=generate_password_hash(password),
-        role=role,
-    )
+    if existing and existing.password_initialized:
+        return jsonify({"error": "Account already exists"}), 409
 
-    db.session.add(user)
+    if existing and not existing.password_initialized:
+        existing.name = name
+        existing.email = email
+        existing.phone = phone
+        existing.password_hash = generate_password_hash(password)
+        existing.password_initialized = True
+        existing.role = "volunteer"
+        existing.verified = False
+        user = existing
+    else:
+        username_seed = first_non_empty(email.split("@")[0] if email else "", phone, name.replace(" ", "").lower())
+        user = User(
+            username=ensure_unique_username(username_seed),
+            name=name,
+            email=email,
+            phone=phone,
+            password_hash=generate_password_hash(password),
+            role="volunteer",
+            verified=False,
+            password_initialized=True,
+        )
+        db.session.add(user)
+
     db.session.commit()
-    ensure_volunteer_profile_for_user(user)
+    profile = ensure_volunteer_profile_for_user(user)
+    if profile:
+        profile.name = name
+        profile.email = email
+        profile.phone = phone
+        if skills:
+            profile.skills = skills
+        profile.verification_status = "Pending"
+    db.session.commit()
 
-    return jsonify({"message": "User created successfully", "user": user.to_dict()}), 201
+    return jsonify({"message": "Volunteer registered successfully", "user": user.to_dict()}), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json() or {}
 
-    username = data.get("username", "").strip()
+    login_input = first_non_empty(data.get("login"), data.get("email"), data.get("phone"))
     password = data.get("password", "").strip()
+    admin_code = (data.get("admin_code") or "").strip()
 
-    if not username or not password:
-        return jsonify({"error": "Username and password are required"}), 400
+    if not login_input or not password:
+        return jsonify({"error": "Email/phone and password are required"}), 400
 
-    user = User.query.filter_by(username=username).first()
+    user = find_user_by_login(login_input)
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    ensure_volunteer_profile_for_user(user)
+    if not user.password_initialized:
+        return jsonify({"error": "Account setup pending. Complete signup first."}), 403
+
+    if (user.role or "").lower() == "admin":
+        if normalize_email(login_input) != normalize_email(user.email):
+            return jsonify({"error": "Admin login requires email"}), 400
+        if admin_code != ADMIN_AUTH_CODE:
+            return jsonify({"error": "Invalid Admin Authorization Code"}), 403
+    else:
+        ensure_volunteer_profile_for_user(user)
+
     return jsonify({"user": user.to_dict()}), 200

@@ -8,9 +8,11 @@ export default function Signup() {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationTimeoutRef = useRef(null);
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("volunteer");
+  const [skills, setSkills] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isEntering, setIsEntering] = useState(true);
@@ -57,7 +59,7 @@ export default function Signup() {
       const res = await fetch(`${API_BASE_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }),
+        body: JSON.stringify({ name, email, phone, password, skills }),
       });
 
       const data = await res.json();
@@ -67,10 +69,11 @@ export default function Signup() {
         return;
       }
 
-      // Auto-login after signup
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userRole", data.user.role);
-      navigate("/");
+      navigate("/", {
+        state: { message: "Registration submitted. Admin approval is required before assignment." },
+      });
     } catch {
       setError("Could not connect to server");
     } finally {
@@ -81,7 +84,6 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 px-4">
       <div className={`max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${motionClass}`}>
-        {/* Left hero section (same style as login) */}
         <div className="space-y-6 hidden md:block">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-600 rounded-lg text-white shrink-0 shadow-lg shadow-blue-500/30">
@@ -97,38 +99,53 @@ export default function Signup() {
             Join the response network
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
-            Create your
-            <span className="block text-emerald-400">ReliefPortal Account</span>
+            Register as a
+            <span className="block text-emerald-400">Volunteer Responder</span>
           </h1>
           <p className="text-sm text-slate-300 max-w-md">
-            Set up an admin or volunteer profile to start coordinating disaster relief operations.
+            Create your volunteer account to receive assignments and contribute to disaster response efforts.
           </p>
         </div>
 
-        {/* Right signup card */}
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-8 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold">Create account</h2>
-            <p className="text-xs text-slate-400 mt-1">Sign up as an admin or volunteer.</p>
+            <h2 className="text-xl font-semibold">Volunteer registration</h2>
+            <p className="text-xs text-slate-400 mt-1">Admin approval is required before assignment.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Username
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Name</label>
               <input
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="e.g. ops-admin"
+                placeholder="Your full name"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Password
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="name@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="9876543210"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
               <input
                 type="password"
                 value={password}
@@ -138,35 +155,14 @@ export default function Signup() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Role
-              </label>
-              <div className="flex gap-3 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setRole("admin")}
-                  className={`flex-1 px-3 py-2 rounded-lg border text-left cursor-pointer transition-colors ${
-                    role === "admin"
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
-                      : "border-slate-600 text-slate-300"
-                  }`}
-                >
-                  <span className="block font-semibold">Admin</span>
-                  <span className="text-[10px]">Full access, can manage everything</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("volunteer")}
-                  className={`flex-1 px-3 py-2 rounded-lg border text-left cursor-pointer transition-colors ${
-                    role === "volunteer"
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
-                      : "border-slate-600 text-slate-300"
-                  }`}
-                >
-                  <span className="block font-semibold">Volunteer</span>
-                  <span className="text-[10px]">Can view and support operations</span>
-                </button>
-              </div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Skills (Optional)</label>
+              <input
+                type="text"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="First aid, logistics, rescue"
+              />
             </div>
 
             {error && (

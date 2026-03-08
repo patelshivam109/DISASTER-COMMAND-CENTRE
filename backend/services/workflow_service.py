@@ -1,7 +1,17 @@
+from sqlalchemy import func, or_
+
 from models import ActivityLog, Disaster, Volunteer, VolunteerAssignment, db
 
 DISASTER_LIFECYCLE = ("Created", "Active", "Recovering", "Closed")
 ACTIVE_ASSIGNMENT_STATUSES = {"Assigned", "Accepted", "In Progress"}
+
+
+def normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def normalize_phone(value):
+    return (value or "").strip()
 
 
 def ensure_general_disaster():
@@ -29,21 +39,41 @@ def ensure_volunteer_profile_for_user(user):
         return None
 
     profile = Volunteer.query.filter_by(user_id=user.id).first()
-    if profile:
+    if not profile:
+        email = normalize_email(getattr(user, "email", None))
+        phone = normalize_phone(getattr(user, "phone", None))
+        if email or phone:
+            query = Volunteer.query.filter(Volunteer.user_id.is_(None))
+            contact_filters = []
+            if email:
+                contact_filters.append(func.lower(Volunteer.email) == email)
+            if phone:
+                contact_filters.append(Volunteer.phone == phone)
+            profile = query.filter(or_(*contact_filters)).first() if contact_filters else None
+
+    if not profile:
+        default_disaster = ensure_general_disaster()
+        profile = Volunteer(
+            name=user.name or user.username,
+            email=getattr(user, "email", None),
+            phone=normalize_phone(getattr(user, "phone", None)) or "N/A",
+            skills="General",
+            availability="Available",
+            verification_status="Verified" if getattr(user, "verified", False) else "Pending",
+            hours_logged=0,
+            disaster_id=default_disaster.id,
+            user_id=user.id,
+        )
+        db.session.add(profile)
+        db.session.commit()
         return profile
 
-    default_disaster = ensure_general_disaster()
-    profile = Volunteer(
-        name=user.username,
-        phone="N/A",
-        skills="General",
-        availability="Available",
-        verification_status="Pending",
-        hours_logged=0,
-        disaster_id=default_disaster.id,
-        user_id=user.id,
-    )
-    db.session.add(profile)
+    profile.user_id = user.id
+    profile.name = profile.name or user.name or user.username
+    profile.email = profile.email or getattr(user, "email", None)
+    profile.phone = profile.phone or normalize_phone(getattr(user, "phone", None)) or "N/A"
+    if getattr(user, "verified", False):
+        profile.verification_status = "Verified"
     db.session.commit()
     return profile
 
