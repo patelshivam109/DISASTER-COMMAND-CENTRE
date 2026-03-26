@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, Filter, MapPin, Search, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { buildRoleHeaders, isAdmin } from "../utils/auth";
-
-const API_BASE_URL = "http://localhost:5000/api";
+import { API_BASE_URL } from "../api/config";
 const LIFECYCLE = ["Created", "Active", "Recovering", "Closed"];
 
 const getSeverityColor = (severity) => {

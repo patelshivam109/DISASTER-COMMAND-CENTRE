@@ -67,6 +67,24 @@ def find_user_by_phone(phone_value):
     return User.query.filter(User.phone == phone).first()
 
 
+def find_user_by_identifier(identifier):
+    value = (identifier or "").strip()
+    if not value:
+        return None
+
+    email = normalize_email(value)
+    phone = normalize_phone(value)
+    username = value.lower()
+
+    return User.query.filter(
+        or_(
+            func.lower(User.email) == email,
+            User.phone == phone,
+            func.lower(User.username) == username,
+        )
+    ).first()
+
+
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json() or {}
@@ -76,9 +94,20 @@ def signup():
     phone = normalize_phone(data.get("phone"))
     password = data.get("password", "").strip()
     skills = (data.get("skills") or "").strip() or None
+    requested_role = (data.get("role") or "volunteer").strip().lower()
+    admin_code = (data.get("admin_code") or "").strip()
 
-    if not name or not email or not phone or not password:
-        return jsonify({"error": "Name, email, phone number, and password are required"}), 400
+    if requested_role not in {"volunteer", "admin"}:
+        return jsonify({"error": "Invalid role selection"}), 400
+
+    if requested_role == "admin":
+        if not name or not email or not password:
+            return jsonify({"error": "Name, email, and password are required for admin signup"}), 400
+        if admin_code != ADMIN_AUTH_CODE:
+            return jsonify({"error": "Invalid Admin Authorization Code"}), 403
+    else:
+        if not name or not email or not phone or not password:
+            return jsonify({"error": "Name, email, phone number, and password are required"}), 400
 
     email_owner = find_user_by_email(email)
     phone_owner = find_user_by_phone(phone)
@@ -86,8 +115,6 @@ def signup():
         return jsonify({"error": "Email and phone belong to different accounts"}), 409
 
     existing = email_owner or phone_owner
-    if existing and (existing.role or "").lower() == "admin":
-        return jsonify({"error": "Admin accounts cannot be created from public signup"}), 403
 
     if existing and existing.password_initialized:
         return jsonify({"error": "Account already exists"}), 409
@@ -95,11 +122,11 @@ def signup():
     if existing and not existing.password_initialized:
         existing.name = name
         existing.email = email
-        existing.phone = phone
+        existing.phone = phone or existing.phone
         existing.password_hash = generate_password_hash(password)
         existing.password_initialized = True
-        existing.role = "volunteer"
-        existing.verified = False
+        existing.role = requested_role
+        existing.verified = requested_role == "admin"
         user = existing
     else:
         username_seed = first_non_empty(email.split("@")[0] if email else "", phone, name.replace(" ", "").lower())
@@ -107,26 +134,29 @@ def signup():
             username=ensure_unique_username(username_seed),
             name=name,
             email=email,
-            phone=phone,
+            phone=phone or None,
             password_hash=generate_password_hash(password),
-            role="volunteer",
-            verified=False,
+            role=requested_role,
+            verified=requested_role == "admin",
             password_initialized=True,
         )
         db.session.add(user)
 
     db.session.commit()
-    profile = ensure_volunteer_profile_for_user(user)
-    if profile:
-        profile.name = name
-        profile.email = email
-        profile.phone = phone
-        if skills:
-            profile.skills = skills
-        profile.verification_status = "Pending"
-    db.session.commit()
 
-    return jsonify({"message": "Volunteer registered successfully", "user": user.to_dict()}), 201
+    if requested_role == "volunteer":
+        profile = ensure_volunteer_profile_for_user(user)
+        if profile:
+            profile.name = name
+            profile.email = email
+            profile.phone = phone
+            if skills:
+                profile.skills = skills
+            profile.verification_status = "Pending"
+        db.session.commit()
+        return jsonify({"message": "Volunteer registered successfully", "user": user.to_dict()}), 201
+
+    return jsonify({"message": "Admin account created successfully", "user": user.to_dict()}), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -156,3 +186,38 @@ def login():
         ensure_volunteer_profile_for_user(user)
 
     return jsonify({"user": user.to_dict()}), 200
+
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json() or {}
+    identifier = (data.get("identifier") or "").strip()
+
+    if not identifier:
+        return jsonify({"error": "Email, phone, or username is required"}), 400
+
+    user = find_user_by_identifier(identifier)
+    if user:
+        return (
+            jsonify(
+                {
+                    "message": (
+                        "If an account exists, password reset instructions have been queued. "
+                        "Please contact your administrator to complete reset."
+                    )
+                }
+            ),
+            200,
+        )
+
+    return (
+        jsonify(
+            {
+                "message": (
+                    "If an account exists, password reset instructions have been queued. "
+                    "Please contact your administrator to complete reset."
+                )
+            }
+        ),
+        200,
+    )

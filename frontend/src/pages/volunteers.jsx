@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Award, ChevronRight, Clock, ShieldCheck, UserCheck, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { buildRoleHeaders, getUserRole, isAdmin } from "../utils/auth";
-
-const API_BASE_URL = "http://localhost:5000/api";
+import { API_BASE_URL } from "../api/config";
 
 async function getApiError(response, fallbackMessage) {
   try {

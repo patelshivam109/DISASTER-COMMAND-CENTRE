@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
-
-const API_BASE_URL = "http://localhost:5000/api/auth";
+import { AUTH_API_BASE_URL } from "../api/config";
 
 export default function ResetPassword() {
   const [identifier, setIdentifier] = useState("");
@@ -23,7 +22,7 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/forgot-password`, {
+      const res = await fetch(`${AUTH_API_BASE_URL}/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier }),

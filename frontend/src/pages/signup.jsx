@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
-
-const API_BASE_URL = "http://localhost:5000/api/auth";
+import { AUTH_API_BASE_URL } from "../api/config";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -13,6 +12,8 @@ export default function Signup() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [skills, setSkills] = useState("");
+  const [accountType, setAccountType] = useState("volunteer");
+  const [adminCode, setAdminCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isEntering, setIsEntering] = useState(true);
@@ -53,27 +54,66 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setError("Name, email, and password are required.");
+      return;
+    }
+
+    if (accountType === "volunteer" && !phone.trim()) {
+      setError("Phone number is required for volunteer signup.");
+      return;
+    }
+
+    if (accountType === "admin" && !adminCode.trim()) {
+      setError("Admin authorization code is required for admin signup.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/signup`, {
+      const res = await fetch(`${AUTH_API_BASE_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, password, skills }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          skills: skills.trim(),
+          role: accountType,
+          admin_code: accountType === "admin" ? adminCode.trim() : "",
+        }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      let data = null;
+      let fallbackText = "";
+
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        fallbackText = (await res.text()).trim();
+      }
+
       if (!res.ok) {
-        setError(data.error || "Signup failed");
+        setError(data?.error || data?.message || fallbackText || `Signup failed (${res.status})`);
         setLoading(false);
         return;
       }
 
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userRole", data.user.role);
-      navigate("/", {
-        state: { message: "Registration submitted. Admin approval is required before assignment." },
-      });
+      navigate(
+        "/",
+        {
+          state:
+            accountType === "admin"
+              ? { message: "Admin account created successfully." }
+              : { message: "Registration submitted. Admin approval is required before assignment." },
+        }
+      );
     } catch {
       setError("Could not connect to server");
     } finally {
@@ -109,11 +149,41 @@ export default function Signup() {
 
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-8 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold">Volunteer registration</h2>
-            <p className="text-xs text-slate-400 mt-1">Admin approval is required before assignment.</p>
+            <h2 className="text-xl font-semibold">Create account</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Volunteer registration requires admin approval. Admin signup requires authorization code.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Account Type</label>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setAccountType("volunteer")}
+                  className={`px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                    accountType === "volunteer"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                      : "border-slate-600 text-slate-300"
+                  }`}
+                >
+                  Volunteer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("admin")}
+                  className={`px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                    accountType === "admin"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                      : "border-slate-600 text-slate-300"
+                  }`}
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">Name</label>
               <input
@@ -141,7 +211,7 @@ export default function Signup() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="9876543210"
+                placeholder={accountType === "admin" ? "Optional for admin" : "9876543210"}
               />
             </div>
             <div>
@@ -154,16 +224,34 @@ export default function Signup() {
                 placeholder="Choose a strong password"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Skills (Optional)</label>
-              <input
-                type="text"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="First aid, logistics, rescue"
-              />
-            </div>
+
+            {accountType === "admin" && (
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Admin Authorization Code
+                </label>
+                <input
+                  type="text"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="Enter admin code"
+                />
+              </div>
+            )}
+
+            {accountType === "volunteer" && (
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Skills (Optional)</label>
+                <input
+                  type="text"
+                  value={skills}
+                  onChange={(e) => setSkills(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-900 text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  placeholder="First aid, logistics, rescue"
+                />
+              </div>
+            )}
 
             {error && (
               <p className="text-xs text-red-400 bg-red-950/40 border border-red-900/60 rounded-md px-3 py-2">
@@ -176,7 +264,7 @@ export default function Signup() {
               disabled={loading}
               className="w-full px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 text-sm font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
             >
-              {loading ? "Creating account..." : "Sign up"}
+              {loading ? "Creating account..." : accountType === "admin" ? "Create admin account" : "Sign up"}
             </button>
           </form>
 

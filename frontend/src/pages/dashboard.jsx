@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock3, Package, ShieldAlert, UserCircle2, Users } from "lucide-react";
 import { buildRoleHeaders, getUserRole } from "../utils/auth";
-
-const API_BASE_URL = "http://localhost:5000/api";
+import { API_BASE_URL } from "../api/config";
 
 function formatRelative(timestamp) {
   if (!timestamp) return "Just now";
