@@ -4,13 +4,22 @@ from flask import Blueprint, g, jsonify, request
 from sqlalchemy import func, or_
 from werkzeug.security import generate_password_hash
 
-from models import Disaster, User, Volunteer, VolunteerAssignment, db, utcnow
-from routes.access_control import require_auth, require_roles
-from services.workflow_service import (
-    ensure_general_disaster,
-    ensure_volunteer_profile_for_user,
-    log_activity,
-)
+try:
+    from models import Disaster, User, Volunteer, VolunteerAssignment, db, utcnow
+    from routes.access_control import require_auth, require_roles
+    from services.workflow_service import (
+        ensure_general_disaster,
+        ensure_volunteer_profile_for_user,
+        log_activity,
+    )
+except ModuleNotFoundError:
+    from ..models import Disaster, User, Volunteer, VolunteerAssignment, db, utcnow
+    from .access_control import require_auth, require_roles
+    from ..services.workflow_service import (
+        ensure_general_disaster,
+        ensure_volunteer_profile_for_user,
+        log_activity,
+    )
 
 volunteer_bp = Blueprint("volunteer_bp", __name__)
 

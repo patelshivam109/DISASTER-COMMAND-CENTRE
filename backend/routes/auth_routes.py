@@ -2,8 +2,12 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy import func, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models import User, db
-from services.workflow_service import ensure_volunteer_profile_for_user
+try:
+    from models import User, db
+    from services.workflow_service import ensure_volunteer_profile_for_user
+except ModuleNotFoundError:
+    from ..models import User, db
+    from ..services.workflow_service import ensure_volunteer_profile_for_user
 
 
 auth_bp = Blueprint("auth_bp", __name__)

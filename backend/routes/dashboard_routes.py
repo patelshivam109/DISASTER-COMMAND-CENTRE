@@ -1,9 +1,14 @@
 from flask import Blueprint, g, jsonify
 import re
 
-from models import ActivityLog, Disaster, Resource, VolunteerAssignment
-from routes.access_control import require_roles
-from services.workflow_service import ensure_volunteer_profile_for_user
+try:
+    from models import ActivityLog, Disaster, Resource, VolunteerAssignment
+    from routes.access_control import require_roles
+    from services.workflow_service import ensure_volunteer_profile_for_user
+except ModuleNotFoundError:
+    from ..models import ActivityLog, Disaster, Resource, VolunteerAssignment
+    from .access_control import require_roles
+    from ..services.workflow_service import ensure_volunteer_profile_for_user
 
 dashboard_bp = Blueprint("dashboard_bp", __name__)
 

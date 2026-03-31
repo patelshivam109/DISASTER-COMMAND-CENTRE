@@ -2,23 +2,42 @@ import io
 
 from flask import Blueprint, g, jsonify, request, send_file
 
-from models import (
-    ActivityLog,
-    Disaster,
-    DisasterProgressUpdate,
-    ResourceAllocation,
-    VolunteerAssignment,
-    utcnow,
-    db,
-)
-from routes.access_control import require_auth, require_roles
-from services.report_service import build_disaster_report_pdf, build_disaster_report_summary
-from services.workflow_service import (
-    build_disaster_workflow_flags,
-    can_transition_disaster_status,
-    get_active_assignment_count,
-    log_activity,
-)
+try:
+    from models import (
+        ActivityLog,
+        Disaster,
+        DisasterProgressUpdate,
+        ResourceAllocation,
+        VolunteerAssignment,
+        utcnow,
+        db,
+    )
+    from routes.access_control import require_auth, require_roles
+    from services.report_service import build_disaster_report_pdf, build_disaster_report_summary
+    from services.workflow_service import (
+        build_disaster_workflow_flags,
+        can_transition_disaster_status,
+        get_active_assignment_count,
+        log_activity,
+    )
+except ModuleNotFoundError:
+    from ..models import (
+        ActivityLog,
+        Disaster,
+        DisasterProgressUpdate,
+        ResourceAllocation,
+        VolunteerAssignment,
+        utcnow,
+        db,
+    )
+    from .access_control import require_auth, require_roles
+    from ..services.report_service import build_disaster_report_pdf, build_disaster_report_summary
+    from ..services.workflow_service import (
+        build_disaster_workflow_flags,
+        can_transition_disaster_status,
+        get_active_assignment_count,
+        log_activity,
+    )
 
 disaster_bp = Blueprint("disaster_bp", __name__)
 
@@ -36,6 +55,21 @@ def validate_affected_display(raw_value):
     if len(raw_value) > 50:
         return None, "affected_display must be 50 characters or fewer"
     return raw_value, None
+
+
+def validate_coordinate(raw_value, field_name, minimum, maximum):
+    if raw_value is None or raw_value == "":
+        return None, f"{field_name} is required"
+
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return None, f"{field_name} must be a valid decimal number"
+
+    if value < minimum or value > maximum:
+        return None, f"{field_name} must be between {minimum} and {maximum}"
+
+    return value, None
 
 
 @disaster_bp.route("/disasters", methods=["POST"])
@@ -61,9 +95,19 @@ def add_disaster():
     if affected_error:
         return jsonify({"error": affected_error}), 400
 
+    latitude, latitude_error = validate_coordinate(data.get("latitude"), "latitude", -90, 90)
+    if latitude_error:
+        return jsonify({"error": latitude_error}), 400
+
+    longitude, longitude_error = validate_coordinate(data.get("longitude"), "longitude", -180, 180)
+    if longitude_error:
+        return jsonify({"error": longitude_error}), 400
+
     disaster = Disaster(
         type=data["type"],
         location=data["location"],
+        latitude=latitude,
+        longitude=longitude,
         severity=data.get("severity", priority),
         priority=priority,
         status=status,
@@ -154,6 +198,20 @@ def update_disaster(disaster_id):
         disaster.status = new_status
         status_changed = previous_status != new_status
         updated = updated or status_changed
+
+    if "latitude" in data:
+        latitude, latitude_error = validate_coordinate(data.get("latitude"), "latitude", -90, 90)
+        if latitude_error:
+            return jsonify({"error": latitude_error}), 400
+        disaster.latitude = latitude
+        updated = True
+
+    if "longitude" in data:
+        longitude, longitude_error = validate_coordinate(data.get("longitude"), "longitude", -180, 180)
+        if longitude_error:
+            return jsonify({"error": longitude_error}), 400
+        disaster.longitude = longitude
+        updated = True
 
     for field in editable_fields:
         if field in data:

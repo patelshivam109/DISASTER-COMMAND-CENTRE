@@ -1,6 +1,9 @@
 from sqlalchemy import func, or_
 
-from models import ActivityLog, Disaster, Volunteer, VolunteerAssignment, db
+try:
+    from models import ActivityLog, Disaster, Volunteer, VolunteerAssignment, db
+except ModuleNotFoundError:
+    from ..models import ActivityLog, Disaster, Volunteer, VolunteerAssignment, db
 
 DISASTER_LIFECYCLE = ("Created", "Active", "Recovering", "Closed")
 ACTIVE_ASSIGNMENT_STATUSES = {"Assigned", "Accepted", "In Progress"}

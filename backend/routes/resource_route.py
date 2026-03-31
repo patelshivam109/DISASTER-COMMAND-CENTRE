@@ -1,8 +1,13 @@
 from flask import Blueprint, g, jsonify, request
 
-from models import Disaster, Resource, ResourceAllocation, db
-from routes.access_control import require_auth, require_roles
-from services.workflow_service import ensure_general_disaster, log_activity
+try:
+    from models import Disaster, Resource, ResourceAllocation, db
+    from routes.access_control import require_auth, require_roles
+    from services.workflow_service import ensure_general_disaster, log_activity
+except ModuleNotFoundError:
+    from ..models import Disaster, Resource, ResourceAllocation, db
+    from .access_control import require_auth, require_roles
+    from ..services.workflow_service import ensure_general_disaster, log_activity
 
 resource_bp = Blueprint("resource_bp", __name__)
 

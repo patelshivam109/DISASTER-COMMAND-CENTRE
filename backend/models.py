@@ -18,6 +18,8 @@ class Disaster(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String(100), nullable=False)
     location = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     severity = db.Column(db.String(50))
     priority = db.Column(db.String(20), default="Moderate")
     status = db.Column(db.String(50), default="Created")
@@ -66,6 +68,8 @@ class Disaster(db.Model):
             "id": self.id,
             "type": self.type,
             "location": self.location,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
             "severity": self.severity,
             "priority": self.priority,
             "status": self.status,
@@ -328,4 +332,3 @@ class ActivityLog(db.Model):
             "volunteer_id": self.volunteer_id,
             "created_at": iso_or_none(self.created_at),
         }
-

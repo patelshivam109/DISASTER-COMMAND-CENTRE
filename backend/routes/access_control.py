@@ -2,7 +2,10 @@ from functools import wraps
 
 from flask import g, jsonify, request
 
-from models import User
+try:
+    from models import User
+except ModuleNotFoundError:
+    from ..models import User
 
 
 def get_request_role():

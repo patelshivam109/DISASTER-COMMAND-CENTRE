@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local environments
+backend/venv/
+.venv/
+venv/
+
+# Local configuration
+backend/.env
+backend/.flaskenv
+.env
+
+# Local databases and runtime files
+backend/instance/
+instance/
+*.db
+
+# Frontend dependencies/build
+frontend/node_modules/
+frontend/dist/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
