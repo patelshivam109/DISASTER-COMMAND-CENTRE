@@ -1,4 +1,7 @@
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const fallbackApiUrl = "https://disaster-command-centre.onrender.com";
+const configuredApiUrl = (import.meta.env.VITE_API_URL || fallbackApiUrl).replace(/\/$/, "");
 
-export const API_BASE_URL = rawBaseUrl.replace(/\/$/, "");
+export const API_BASE_URL = configuredApiUrl.endsWith("/api")
+  ? configuredApiUrl
+  : `${configuredApiUrl}/api`;
 export const AUTH_API_BASE_URL = `${API_BASE_URL}/auth`;

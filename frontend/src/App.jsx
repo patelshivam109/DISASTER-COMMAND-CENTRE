@@ -8,6 +8,7 @@ import Volunteers from "./pages/volunteers";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 import ResetPassword from "./pages/reset-password";
+import ApiTest from "./pages/api-test";
 
 function PublicLayout() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/api-test" element={<ApiTest />} />
 
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Dashboard />} />
