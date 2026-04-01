@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api",
-      "destination": "https://disaster-command-centre-backend.onrender.com/api"
+      "destination": "https://disaster-command-centre.onrender.com/api"
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://disaster-command-centre-backend.onrender.com/api/$1"
+      "destination": "https://disaster-command-centre.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
