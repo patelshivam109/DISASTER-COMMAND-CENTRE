@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 import { AUTH_API_BASE_URL } from "../api/config";
+import { persistAuthSession } from "../utils/auth";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -103,8 +104,7 @@ export default function Signup() {
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("userRole", data.user.role);
+      persistAuthSession(data);
       navigate(
         "/",
         {

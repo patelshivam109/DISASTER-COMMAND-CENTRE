@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import AppShell from "./components/AppShell";
 import BackendStatusBanner from "./components/BackendStatusBanner";
+import { isLoggedIn } from "./utils/auth";
 import { RouteLoader } from "./ui/skeleton";
 
 const Dashboard = lazy(() => import("./pages/dashboard"));
@@ -35,9 +36,9 @@ function PublicLayout() {
 
 function RequireAuth({ children }) {
   const location = useLocation();
-  const hasUser = Boolean(localStorage.getItem("user"));
+  const hasSession = isLoggedIn();
 
-  if (!hasUser) {
+  if (!hasSession) {
     return (
       <Navigate
         replace

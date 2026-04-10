@@ -10,8 +10,8 @@ import {
   UserCircle2,
   Users,
 } from "lucide-react";
-import { API_BASE_URL } from "../api/config";
-import { buildRoleHeaders, getStoredUser, getUserRole } from "../utils/auth";
+import { apiFetch } from "../api/client";
+import { getStoredUser, getUserRole } from "../utils/auth";
 import { DashboardSkeleton } from "../ui/skeleton";
 import { SectionEyebrow, StatusChip, SurfaceCard } from "../ui/surface-card";
 
@@ -34,10 +34,7 @@ function safeMax(values) {
 }
 
 async function fetchDashboard(path, signal) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: buildRoleHeaders(),
-    signal,
-  });
+  const response = await apiFetch(path, { signal });
 
   if (!response.ok) {
     let message = "Unable to load dashboard";
@@ -70,7 +67,8 @@ function HeroHighlights({ items }) {
   );
 }
 
-function MetricCard({ title, value, subtitle, icon: Icon, tone = "primary" }) {
+function MetricCard({ title, value, subtitle, icon, tone = "primary" }) {
+  const IconComponent = icon;
   const toneStyles = {
     primary: "text-[var(--accent-primary)]",
     success: "text-[var(--accent-success)]",
@@ -88,7 +86,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, tone = "primary" }) {
           <p className="mt-2 text-sm text-[var(--text-dim)]">{subtitle}</p>
         </div>
         <span className={`metric-orb ${toneStyles[tone]}`}>
-          <Icon className="h-5 w-5" />
+          <IconComponent className="h-5 w-5" />
         </span>
       </div>
     </SurfaceCard>

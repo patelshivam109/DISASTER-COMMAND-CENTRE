@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Award, ChevronRight, Clock, ShieldCheck, UserCheck, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { buildRoleHeaders, getUserRole, isAdmin } from "../utils/auth";
-import { API_BASE_URL } from "../api/config";
+import { apiFetch } from "../api/client";
+import { getUserRole, isAdmin, isLoggedIn } from "../utils/auth";
 
 async function getApiError(response, fallbackMessage) {
   try {
@@ -66,8 +66,7 @@ function AdminVolunteerView() {
   const [adminNotice, setAdminNotice] = useState("");
 
   const requireAuth = () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
+    if (!isLoggedIn()) {
       navigate("/login", {
         state: { from: location.pathname, message: "Login required to manage volunteers." },
       });
@@ -79,9 +78,9 @@ function AdminVolunteerView() {
   const loadData = async () => {
     try {
       const [volRes, disRes, assignRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/volunteers`, { headers: buildRoleHeaders() }),
-        fetch(`${API_BASE_URL}/disasters`, { headers: buildRoleHeaders() }),
-        fetch(`${API_BASE_URL}/assignments`, { headers: buildRoleHeaders() }),
+        apiFetch("/volunteers"),
+        apiFetch("/disasters"),
+        apiFetch("/assignments"),
       ]);
       const [volData, disData, assignData] = await Promise.all([
         volRes.ok ? volRes.json() : [],
@@ -222,9 +221,9 @@ function AdminVolunteerView() {
                   return;
                 }
                 try {
-                  const response = await fetch(`${API_BASE_URL}/volunteers`, {
+                  const response = await apiFetch("/volunteers", {
                     method: "POST",
-                    headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(newVolunteer),
                   });
                   if (!response.ok) {
@@ -339,9 +338,9 @@ function AdminVolunteerView() {
                           onClick={async () => {
                             setAdminError("");
                             setAdminNotice("");
-                            const response = await fetch(`${API_BASE_URL}/volunteers/${volunteer.id}`, {
+                            const response = await apiFetch(`/volunteers/${volunteer.id}`, {
                               method: "PATCH",
-                              headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                              headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ verification_status: "Verified" }),
                             });
                             if (!response.ok) {
@@ -425,9 +424,9 @@ function AdminVolunteerView() {
                 if (!assignmentDraft.disaster_id) return;
                 setAdminError("");
                 setAdminNotice("");
-                const response = await fetch(`${API_BASE_URL}/volunteers/${selectedVolunteer.id}/assignments`, {
+                const response = await apiFetch(`/volunteers/${selectedVolunteer.id}/assignments`, {
                   method: "POST",
-                  headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     disaster_id: Number(assignmentDraft.disaster_id),
                     task_details: assignmentDraft.task_details,
@@ -476,9 +475,8 @@ function AdminVolunteerView() {
                   <button
                     className="text-xs text-red-600 hover:underline"
                     onClick={async () => {
-                      const response = await fetch(`${API_BASE_URL}/assignments/${assignment.id}`, {
+                      const response = await apiFetch(`/assignments/${assignment.id}`, {
                         method: "DELETE",
-                        headers: buildRoleHeaders(),
                       });
                       if (!response.ok) {
                         setAdminError(await getApiError(response, "Failed to remove assignment"));
@@ -507,9 +505,7 @@ function VolunteerTaskView() {
 
   const loadData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/volunteers/me`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch("/volunteers/me");
       if (!response.ok) throw new Error("Failed to load volunteer data");
       const data = await response.json();
       setProfile(data.profile);
@@ -593,9 +589,9 @@ function VolunteerTaskView() {
                       <button
                         className="px-3 py-1.5 text-xs rounded-md bg-green-600 hover:bg-green-700 text-white"
                         onClick={async () => {
-                          await fetch(`${API_BASE_URL}/assignments/${assignment.id}/respond`, {
+                          await apiFetch(`/assignments/${assignment.id}/respond`, {
                             method: "POST",
-                            headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ action: "accept" }),
                           });
                           await loadData();
@@ -606,9 +602,9 @@ function VolunteerTaskView() {
                       <button
                         className="px-3 py-1.5 text-xs rounded-md bg-rose-600 hover:bg-rose-700 text-white"
                         onClick={async () => {
-                          await fetch(`${API_BASE_URL}/assignments/${assignment.id}/respond`, {
+                          await apiFetch(`/assignments/${assignment.id}/respond`, {
                             method: "POST",
-                            headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ action: "reject" }),
                           });
                           await loadData();
@@ -636,9 +632,9 @@ function VolunteerTaskView() {
                         onClick={async () => {
                           const hours = Number(hoursByAssignment[assignment.id] || 0);
                           if (!hours) return;
-                          await fetch(`${API_BASE_URL}/assignments/${assignment.id}/hours`, {
+                          await apiFetch(`/assignments/${assignment.id}/hours`, {
                             method: "POST",
-                            headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ hours }),
                           });
                           setHoursByAssignment({ ...hoursByAssignment, [assignment.id]: "" });
@@ -650,9 +646,8 @@ function VolunteerTaskView() {
                       <button
                         className="px-3 py-1.5 text-xs rounded-md bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={async () => {
-                          await fetch(`${API_BASE_URL}/assignments/${assignment.id}/complete`, {
+                          await apiFetch(`/assignments/${assignment.id}/complete`, {
                             method: "POST",
-                            headers: buildRoleHeaders(),
                           });
                           await loadData();
                         }}

@@ -19,4 +19,4 @@ So I developed a full-stack Disaster Relief Portal that helps coordinate disaste
 * Frontend: React (Vite, Tailwind CSS)
 * Backend: Flask (SQLAlchemy, Blueprints)
 * Database: SQLite moved to postgresql
-* Auth: Role-based access with secure password hashing
+* Auth: JWT-based role access with secure password hashing

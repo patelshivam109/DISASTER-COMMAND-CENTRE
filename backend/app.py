@@ -1,7 +1,9 @@
 import logging
 import os
+from datetime import timedelta
 
 from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager
 from werkzeug.exceptions import HTTPException
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -46,6 +48,13 @@ def configure_logging(flask_app):
     flask_app.logger.setLevel(log_level)
 
 
+def get_jwt_secret():
+    jwt_secret = (os.getenv("JWT_SECRET_KEY") or "").strip()
+    if not jwt_secret:
+        raise RuntimeError("JWT_SECRET_KEY is not set. Configure it in the deployment environment.")
+    return jwt_secret
+
+
 app = Flask(__name__)
 configure_logging(app)
 CORS(app, resources={r"/api/*": {"origins": get_cors_origins()}})
@@ -54,15 +63,43 @@ database_url = get_database_url()
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+app.config["JWT_SECRET_KEY"] = get_jwt_secret()
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=3600)
 
 db.init_app(app)
 migrate = Migrate(app, db)
+jwt = JWTManager(app)
 
 app.register_blueprint(disaster_bp, url_prefix="/api")
 app.register_blueprint(resource_bp, url_prefix="/api")
 app.register_blueprint(volunteer_bp, url_prefix="/api")
 app.register_blueprint(dashboard_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
+
+@jwt.unauthorized_loader
+def handle_missing_jwt(_reason):
+    return {"error": "Unauthorized"}, 401
+
+
+@jwt.invalid_token_loader
+def handle_invalid_jwt(_reason):
+    return {"error": "Unauthorized"}, 401
+
+
+@jwt.expired_token_loader
+def handle_expired_jwt(_jwt_header, _jwt_payload):
+    return {"error": "Unauthorized"}, 401
+
+
+@jwt.needs_fresh_token_loader
+def handle_non_fresh_jwt(_jwt_header, _jwt_payload):
+    return {"error": "Unauthorized"}, 401
+
+
+@jwt.revoked_token_loader
+def handle_revoked_jwt(_jwt_header, _jwt_payload):
+    return {"error": "Unauthorized"}, 401
 
 
 def log_registered_routes():

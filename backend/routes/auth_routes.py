@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 from sqlalchemy import func, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -89,6 +90,25 @@ def find_user_by_identifier(identifier):
     ).first()
 
 
+def build_auth_response(user, message, status_code):
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={
+            "role": (user.role or "").lower(),
+        },
+    )
+    return (
+        jsonify(
+            {
+                "message": message,
+                "access_token": access_token,
+                "user": user.to_dict(),
+            }
+        ),
+        status_code,
+    )
+
+
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json() or {}
@@ -158,9 +178,9 @@ def signup():
                 profile.skills = skills
             profile.verification_status = "Pending"
         db.session.commit()
-        return jsonify({"message": "Volunteer registered successfully", "user": user.to_dict()}), 201
+        return build_auth_response(user, "Volunteer registered successfully", 201)
 
-    return jsonify({"message": "Admin account created successfully", "user": user.to_dict()}), 201
+    return build_auth_response(user, "Admin account created successfully", 201)
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -189,7 +209,7 @@ def login():
     else:
         ensure_volunteer_profile_for_user(user)
 
-    return jsonify({"user": user.to_dict()}), 200
+    return build_auth_response(user, "Login successful", 200)
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])

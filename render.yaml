@@ -9,6 +9,8 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
       - key: CORS_ORIGINS
         value: "*"
       - key: LOG_LEVEL

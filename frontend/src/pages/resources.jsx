@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, Package, Search, Truck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { buildRoleHeaders, isAdmin } from "../utils/auth";
-import { API_BASE_URL } from "../api/config";
+import { apiFetch } from "../api/client";
+import { isAdmin, isLoggedIn } from "../utils/auth";
 
 async function getApiError(response, fallbackMessage) {
   try {
@@ -72,8 +72,7 @@ export default function Resources() {
   });
 
   const requireAuth = () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
+    if (!isLoggedIn()) {
       navigate("/login", {
         state: {
           from: location.pathname,
@@ -87,9 +86,7 @@ export default function Resources() {
 
   const loadResources = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch("/resources");
       if (!response.ok) throw new Error("Failed to fetch resources");
       const data = await response.json();
       setInventory(data);
@@ -101,9 +98,7 @@ export default function Resources() {
 
   const loadDisasters = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch("/disasters");
       if (!response.ok) throw new Error("Failed to fetch disasters");
       const data = await response.json();
       setDisasters(data.filter((item) => item.type !== "General"));
@@ -115,9 +110,7 @@ export default function Resources() {
 
   const loadAllocationHistory = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/allocations`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch("/resources/allocations");
       if (!response.ok) throw new Error("Failed to fetch allocation history");
       setAllocationHistory(await response.json());
     } catch (error) {
@@ -150,9 +143,9 @@ export default function Resources() {
         low_threshold: Number(newResource.low_threshold),
         critical_threshold: Number(newResource.critical_threshold),
       };
-      const response = await fetch(`${API_BASE_URL}/resources`, {
+      const response = await apiFetch("/resources", {
         method: "POST",
-        headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -183,9 +176,9 @@ export default function Resources() {
     setResourceError("");
     setResourceNotice("");
     try {
-      const response = await fetch(`${API_BASE_URL}/resources/${resourceId}/allocate`, {
+      const response = await apiFetch(`/resources/${resourceId}/allocate`, {
         method: "POST",
-        headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           disaster_id: Number(allocationDraft.disaster_id),
           quantity: Number(allocationDraft.quantity),

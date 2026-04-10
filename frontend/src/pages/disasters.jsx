@@ -1,8 +1,8 @@
 import { Suspense, lazy, useDeferredValue, useEffect, useState } from "react";
 import { Activity, AlertTriangle, Filter, MapPin, Search, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../api/config";
-import { buildRoleHeaders, isAdmin } from "../utils/auth";
+import { apiFetch } from "../api/client";
+import { isAdmin, isLoggedIn } from "../utils/auth";
 import { MapPanelSkeleton, Skeleton } from "../ui/skeleton";
 
 const DisasterMap = lazy(() => import("../components/DisasterMap"));
@@ -131,8 +131,7 @@ export default function Disasters() {
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const requireAuth = () => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
+    if (!isLoggedIn()) {
       navigate("/login", {
         state: {
           from: location.pathname,
@@ -149,10 +148,7 @@ export default function Disasters() {
     setLoadError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters`, {
-        headers: buildRoleHeaders(),
-        signal,
-      });
+      const response = await apiFetch("/disasters", { signal });
       if (!response.ok) {
         const message = await getApiError(response, "Failed to fetch disasters");
         throw new Error(message);
@@ -177,9 +173,7 @@ export default function Disasters() {
     setOperationError("");
     setOperationNotice("");
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters/${disasterId}/operations`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch(`/disasters/${disasterId}/operations`);
       if (!response.ok) {
         throw new Error("Failed to load operation details");
       }
@@ -212,9 +206,9 @@ export default function Disasters() {
     setOperationError("");
     setOperationNotice("");
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters/${selectedDisasterId}`, {
+      const response = await apiFetch(`/disasters/${selectedDisasterId}`, {
         method: "PATCH",
-        headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
       });
       if (!response.ok) {
@@ -237,9 +231,7 @@ export default function Disasters() {
     setReportLoading(true);
     setOperationError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters/${selectedDisasterId}/report`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch(`/disasters/${selectedDisasterId}/report`);
       if (!response.ok) {
         const message = await getApiError(response, "Failed to generate report");
         setOperationError(message);
@@ -260,9 +252,7 @@ export default function Disasters() {
     if (!selectedDisasterId) return;
     setOperationError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters/${selectedDisasterId}/report/pdf`, {
-        headers: buildRoleHeaders(),
-      });
+      const response = await apiFetch(`/disasters/${selectedDisasterId}/report/pdf`);
       if (!response.ok) {
         const message = await getApiError(response, "Failed to download report PDF");
         setOperationError(message);
@@ -299,9 +289,9 @@ export default function Disasters() {
     setAffectedSaving(true);
     setOperationError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/disasters/${selectedDisasterId}/update-affected`, {
+      const response = await apiFetch(`/disasters/${selectedDisasterId}/update-affected`, {
         method: "PUT",
-        headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ affected_display: value }),
       });
       if (!response.ok) {
@@ -478,9 +468,9 @@ export default function Disasters() {
                     longitude: Number(newDisaster.longitude),
                   };
 
-                  const response = await fetch(`${API_BASE_URL}/disasters`, {
+                  const response = await apiFetch("/disasters", {
                     method: "POST",
-                    headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                   });
                   if (!response.ok) {
@@ -624,9 +614,8 @@ export default function Disasters() {
                     className="font-medium text-red-600 hover:underline dark:text-red-400"
                     onClick={async () => {
                       try {
-                        const response = await fetch(`${API_BASE_URL}/disasters/${disaster.id}`, {
+                        const response = await apiFetch(`/disasters/${disaster.id}`, {
                           method: "DELETE",
-                          headers: buildRoleHeaders(),
                         });
                         if (!response.ok) throw new Error("Delete failed");
                         if (selectedDisasterId === disaster.id) {
@@ -891,9 +880,9 @@ export default function Disasters() {
                       if (!message) return;
                       setOperationError("");
                       try {
-                        const response = await fetch(`${API_BASE_URL}/disasters/${selectedDisasterId}/progress`, {
+                        const response = await apiFetch(`/disasters/${selectedDisasterId}/progress`, {
                           method: "POST",
-                          headers: buildRoleHeaders({ "Content-Type": "application/json" }),
+                          headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ message }),
                         });
                         if (!response.ok) {

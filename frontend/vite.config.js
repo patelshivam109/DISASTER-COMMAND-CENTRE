@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { cwd } from "node:process";
 
 function getProxyTarget(configuredApiUrl) {
   const normalizedApiUrl = configuredApiUrl.trim().replace(/\/$/, "");
@@ -13,7 +14,7 @@ function getProxyTarget(configuredApiUrl) {
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const env = loadEnv(mode, cwd(), "");
 
   return {
     plugins: [react()],

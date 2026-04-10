@@ -14,7 +14,7 @@ import {
   Package,
 } from "lucide-react";
 import useDarkMode from "../hooks/useDarkMode";
-import { getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
+import { clearAuthSession, getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -32,8 +32,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const role = hasUser ? getUserRole() : "guest";
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
+    clearAuthSession();
     navigate("/login");
     onClose?.();
   };
