@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen, onClose }) {
       />
 
       <aside
-        className={`panel-surface fixed inset-y-4 left-4 z-50 flex w-[294px] flex-col rounded-[32px] px-4 py-4 transition duration-300 lg:sticky lg:top-4 lg:z-20 lg:h-[calc(100vh-2rem)] lg:translate-x-0 ${
+        className={`panel-surface fixed inset-y-4 left-4 z-50 flex w-[min(294px,calc(100vw-2rem))] flex-col overflow-y-auto rounded-[32px] px-4 py-4 transition duration-300 lg:sticky lg:top-4 lg:z-20 lg:h-[calc(100vh-2rem)] lg:w-[294px] lg:translate-x-0 ${
           isCollapsed ? "lg:w-[108px]" : "lg:w-[294px]"
         } ${isOpen ? "translate-x-0" : "-translate-x-[120%]"} `}
       >

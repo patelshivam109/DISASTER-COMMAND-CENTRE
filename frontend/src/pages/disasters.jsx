@@ -504,7 +504,7 @@ export default function Disasters() {
       ) : null}
 
       <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:flex-row">
-        <div className="relative w-full md:w-96">
+        <div className="relative w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -592,9 +592,9 @@ export default function Disasters() {
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-400 dark:border-gray-700">
+            <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-4 text-xs text-gray-400 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
               <span>Updated {formatDate(disaster.date)}</span>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                   onClick={async () => {
@@ -639,7 +639,7 @@ export default function Disasters() {
 
       {selectedDisasterId && operationData ? (
         <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Manage Operation: {operationData.disaster.type} - {operationData.disaster.location}
@@ -666,7 +666,7 @@ export default function Disasters() {
                   : "Not available"}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {canManageDisasters ? (
                 <button
                   className="rounded-lg bg-amber-600 px-3 py-2 text-xs text-white hover:bg-amber-700"
@@ -748,7 +748,7 @@ export default function Disasters() {
                   className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
                   placeholder="Enter affected people display..."
                 />
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                   <button
                     className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                     onClick={() => {
@@ -865,7 +865,7 @@ export default function Disasters() {
                 ))}
               </div>
               {canManageDisasters ? (
-                <div className="flex gap-2 border-t border-gray-200 p-4 dark:border-gray-700">
+                <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row dark:border-gray-700">
                   <input
                     type="text"
                     className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"

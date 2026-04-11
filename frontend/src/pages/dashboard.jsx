@@ -52,14 +52,14 @@ async function fetchDashboard(path, signal) {
 
 function HeroHighlights({ items }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
       {items.map((item) => (
         <div
           key={item.label}
           className="rounded-[24px] border border-white/10 bg-white/8 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur"
         >
           <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white/58">{item.label}</p>
-          <p className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-white">{item.value}</p>
+          <p className="mt-3 break-words text-2xl font-extrabold tracking-[-0.04em] text-white sm:text-[1.75rem]">{item.value}</p>
           <p className="mt-2 text-sm text-white/70">{item.help}</p>
         </div>
       ))}
@@ -96,7 +96,7 @@ function MetricCard({ title, value, subtitle, icon, tone = "primary" }) {
 function ProgressList({ title, items, emptyMessage, renderMeta }) {
   return (
     <SurfaceCard className="rounded-[28px] p-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <p className="text-lg font-bold tracking-[-0.02em]">{title}</p>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Focused view for the highest-signal records only.</p>
@@ -110,12 +110,12 @@ function ProgressList({ title, items, emptyMessage, renderMeta }) {
         ) : (
           items.map((item) => (
             <div key={item.key} className="panel-muted rounded-[22px] px-4 py-4">
-              <div className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{item.label}</p>
                   <p className="mt-1 text-[var(--text-muted)]">{item.caption}</p>
                 </div>
-                {renderMeta(item)}
+                <div className="self-start sm:self-auto">{renderMeta(item)}</div>
               </div>
               {typeof item.progress === "number" ? (
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
@@ -258,11 +258,11 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="hero-panel rounded-[32px] p-8 text-white">
+      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
         <SectionEyebrow>Portfolio-grade command view</SectionEyebrow>
         <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-4xl font-extrabold tracking-[-0.05em] md:text-[3.4rem]">
+            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.4rem]">
               Operations clarity for fast-moving disaster response.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">
@@ -507,11 +507,11 @@ function VolunteerDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="hero-panel rounded-[32px] p-8 text-white">
+      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
         <SectionEyebrow>Volunteer cockpit</SectionEyebrow>
         <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-4xl font-extrabold tracking-[-0.05em] md:text-[3.2rem]">
+            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.2rem]">
               Welcome back, {user?.name || user?.username || "responder"}.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">

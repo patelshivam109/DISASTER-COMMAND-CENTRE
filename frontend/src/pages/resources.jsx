@@ -203,7 +203,7 @@ export default function Resources() {
 
   return (
     <div className="space-y-6 page-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Resource Allocation</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
@@ -240,8 +240,8 @@ export default function Resources() {
       )}
 
       {showResourceForm && canManageResources && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+        <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name</label>
               <input
@@ -329,7 +329,7 @@ export default function Resources() {
       )}
 
       <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8">
+        <nav className="flex gap-6 overflow-x-auto whitespace-nowrap">
           <button
             onClick={() => setActiveTab("inventory")}
             className={`py-3 border-b-2 text-sm font-medium cursor-pointer ${

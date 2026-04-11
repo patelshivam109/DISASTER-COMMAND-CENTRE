@@ -121,7 +121,7 @@ function AdminVolunteerView() {
 
   return (
     <div className="space-y-6 page-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Volunteer Network</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
@@ -151,8 +151,8 @@ function AdminVolunteerView() {
       )}
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name</label>
               <input
@@ -535,7 +535,7 @@ function VolunteerTaskView() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
           <p className="text-xs uppercase text-gray-500 dark:text-gray-400">Assigned Disaster</p>
           <p className="text-sm font-semibold mt-2 dark:text-white">
