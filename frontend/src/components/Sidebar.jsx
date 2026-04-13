@@ -23,6 +23,8 @@ const NAV_ITEMS = [
   { to: "/volunteers", label: "Volunteers", icon: Users },
 ];
 
+const GUEST_NAV_ITEMS = NAV_ITEMS.slice(0, 2);
+
 export default function Sidebar({ isOpen, onClose }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isDark, setIsDark] = useDarkMode();
@@ -30,6 +32,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const hasUser = isLoggedIn();
   const user = getStoredUser();
   const role = hasUser ? getUserRole() : "guest";
+  const navItems = hasUser ? NAV_ITEMS : GUEST_NAV_ITEMS;
 
   const handleLogout = () => {
     clearAuthSession();
@@ -94,7 +97,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         <nav className="flex-1 space-y-2">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink

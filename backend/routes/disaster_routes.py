@@ -133,7 +133,6 @@ def add_disaster():
 
 
 @disaster_bp.route("/disasters", methods=["GET"])
-@require_auth
 def get_disasters():
     disasters = Disaster.query.order_by(Disaster.id.desc()).all()
     return jsonify([disaster.to_dict() for disaster in disasters]), 200

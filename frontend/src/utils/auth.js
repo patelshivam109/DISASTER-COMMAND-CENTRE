@@ -15,6 +15,9 @@ export const isLoggedIn = () => Boolean(getStoredToken() && getStoredUser());
 
 export const getUserRole = () => {
   const user = getStoredUser();
+  if (!user) {
+    return "guest";
+  }
   const storedRole = (user?.role || "volunteer").toLowerCase();
   return storedRole === "admin" ? "admin" : "volunteer";
 };

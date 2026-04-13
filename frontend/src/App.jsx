@@ -35,7 +35,6 @@ function PublicLayout() {
 }
 
 function RequireAuth({ children }) {
-  const location = useLocation();
   const hasSession = isLoggedIn();
 
   if (!hasSession) {
@@ -43,10 +42,9 @@ function RequireAuth({ children }) {
       <Navigate
         replace
         state={{
-          from: location.pathname,
-          message: "Login required to access this area.",
+          message: "You are in guest mode. Login to access this page.",
         }}
-        to="/login"
+        to="/"
       />
     );
   }
@@ -86,9 +84,12 @@ export default function App() {
           <Route element={<ApiTest />} path="/api-test" />
         </Route>
 
-        <Route element={<ProtectedLayout />}>
+        <Route element={<PublicLayout />}>
           <Route element={<Dashboard />} path="/" />
           <Route element={<Disasters />} path="/disasters" />
+        </Route>
+
+        <Route element={<ProtectedLayout />}>
           <Route element={<Resources />} path="/resources" />
           <Route element={<Volunteers />} path="/volunteers" />
         </Route>

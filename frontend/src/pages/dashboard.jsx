@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { apiFetch } from "../api/client";
-import { getStoredUser, getUserRole } from "../utils/auth";
+import { getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
 import { DashboardSkeleton } from "../ui/skeleton";
 import { SectionEyebrow, StatusChip, SurfaceCard } from "../ui/surface-card";
 
@@ -563,7 +563,89 @@ function VolunteerDashboard() {
   );
 }
 
+function GuestDashboard() {
+  const guestHighlights = [
+    {
+      label: "Guest visibility",
+      value: "Dashboard + Disasters",
+      help: "You can explore overview information for the first two pages.",
+    },
+    {
+      label: "Full workspace",
+      value: "Login required",
+      help: "Resources and Volunteers are unlocked only after authentication.",
+    },
+    {
+      label: "Role-based controls",
+      value: "Admin / Volunteer",
+      help: "Permissions are automatically applied after sign in.",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
+        <SectionEyebrow>Guest overview</SectionEyebrow>
+        <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.2rem]">
+              Welcome to the Disaster Relief Portal.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">
+              You are browsing as a guest. Use this page and the disasters page for operational overview, then login for
+              assignments, resource controls, and role-specific workflows.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusChip tone="neutral">Guest mode</StatusChip>
+            <StatusChip tone="primary">Overview access</StatusChip>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <HeroHighlights items={guestHighlights} />
+        </div>
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          title="Accessible pages"
+          value="2"
+          subtitle="Dashboard and Disasters are available without authentication."
+          icon={CheckCircle2}
+          tone="success"
+        />
+        <MetricCard
+          title="Protected pages"
+          value="2"
+          subtitle="Resources and Volunteers require a logged-in account."
+          icon={ShieldAlert}
+          tone="warning"
+        />
+        <MetricCard
+          title="Session state"
+          value="No saved user"
+          subtitle="Refresh-safe guest landing is active when session data is missing."
+          icon={Clock3}
+          tone="neutral"
+        />
+        <MetricCard
+          title="Next step"
+          value="Sign in"
+          subtitle="Authenticate to unlock role-based actions and full operations."
+          icon={ArrowUpRight}
+          tone="primary"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
+  if (!isLoggedIn()) {
+    return <GuestDashboard />;
+  }
+
   const role = getUserRole();
   return role === "admin" ? <AdminDashboard /> : <VolunteerDashboard />;
 }

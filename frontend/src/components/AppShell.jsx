@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Menu, Search, Shield, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
-import { getStoredUser, getUserRole } from "../utils/auth";
+import { getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
 
 const PAGE_META = {
   "/": {
@@ -26,8 +26,9 @@ const PAGE_META = {
 export default function AppShell({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const hasSession = isLoggedIn();
   const user = getStoredUser();
-  const role = getUserRole();
+  const role = hasSession ? getUserRole() : "guest";
 
   const pageMeta = useMemo(
     () =>
