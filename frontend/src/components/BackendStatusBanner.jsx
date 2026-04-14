@@ -59,14 +59,14 @@ export default function BackendStatusBanner() {
   const Icon = meta.icon;
 
   return (
-    <div className="sticky top-0 z-40 px-4 pt-4 md:px-6">
-      <div className={`mx-auto flex max-w-[1480px] items-center gap-3 rounded-2xl border px-4 py-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur ${meta.className}`}>
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.72)]">
+    <div className="sticky top-0 z-40 px-2 pt-2 sm:px-3 md:px-5">
+      <div className={`mx-auto flex max-w-[1440px] items-center gap-2.5 rounded-xl border px-3 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur ${meta.className}`}>
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[rgba(255,255,255,0.72)]">
           <Icon className={`h-5 w-5 ${meta.iconClassName}`} />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold tracking-[0.01em]">{message}</p>
-          <p className="text-xs text-[var(--text-dim)]">{meta.detail}</p>
+          <p className="text-xs font-semibold tracking-[0.01em] sm:text-sm">{message}</p>
+          <p className="hidden text-xs text-[var(--text-dim)] sm:block">{meta.detail}</p>
         </div>
       </div>
     </div>
