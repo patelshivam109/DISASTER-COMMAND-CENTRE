@@ -4,7 +4,7 @@ Most beginner projects stop at basic CRUD. I wanted to build something closer to
 
 So I developed a full-stack Disaster Relief Portal that helps coordinate disasters, volunteers, and resources in one place.
 
-🧠 Key Features:
+ Key Features:
 
 * Disaster lifecycle tracking (Created → Active → Recovering → Closed)
 * Role-based system (Admin & Volunteer workflows)
@@ -14,7 +14,7 @@ So I developed a full-stack Disaster Relief Portal that helps coordinate disaste
 * Activity/Audit logs for full traceability
 * PDF report generation for post-incident summaries
 
-🛠️ Tech Stack:
+ Tech Stack:
 
 * Frontend: React (Vite, Tailwind CSS)
 * Backend: Flask (SQLAlchemy, Blueprints)
