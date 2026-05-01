@@ -6,29 +6,29 @@ import { getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
 
 const PAGE_META = {
   "/": {
-    title: "Operational Overview",
-    description: "Monitor the command center, resource pressure, and volunteer momentum in one glance.",
+    title: "Operations Overview",
+    description: "Current incidents, stock pressure, and responder activity in one clear workspace.",
     seoTitle: "Disaster Relief Portal | Operational Overview",
     seoDescription:
       "Track live disaster response overview, incident status, and readiness summaries in the Disaster Relief Portal.",
   },
   "/disasters": {
-    title: "Incident Map",
-    description: "Track field incidents, lifecycle stage, and live operational activity.",
+    title: "Incidents",
+    description: "Track location, severity, lifecycle stage, and field updates.",
     seoTitle: "Disaster Relief Portal | Incident Map",
     seoDescription:
       "View disaster incidents, locations, status transitions, and operational updates in one responsive map-driven workspace.",
   },
   "/resources": {
-    title: "Resource Allocation",
-    description: "Balance stock levels, allocations, and exhaustion risk across active disasters.",
+    title: "Resources",
+    description: "Manage inventory, allocations, and replenishment risk.",
     seoTitle: "Disaster Relief Portal | Resource Allocation",
     seoDescription:
       "Manage relief inventory, stock thresholds, and resource allocation history for active disaster operations.",
   },
   "/volunteers": {
-    title: "Volunteer Network",
-    description: "Coordinate verification, assignments, and task progress with a calmer workflow.",
+    title: "Volunteers",
+    description: "Verify people, assign work, and monitor progress.",
     seoTitle: "Disaster Relief Portal | Volunteer Network",
     seoDescription:
       "Coordinate volunteer profiles, verification, assignments, and response progress through a centralized operations console.",
@@ -46,7 +46,7 @@ export default function AppShell({ children }) {
     () =>
       PAGE_META[location.pathname] || {
         title: "Command Center",
-        description: "Keep operations aligned with a fast, focused workflow.",
+        description: "Keep response work aligned with a focused workflow.",
         seoTitle: "Disaster Relief Portal",
         seoDescription:
           "A modern disaster response command center for managing incidents, resources, and volunteer operations.",
@@ -91,44 +91,44 @@ export default function AppShell({ children }) {
       >
         Skip to main content
       </a>
-      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] gap-3 px-2 pb-4 sm:px-3 md:gap-4 md:px-5">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] gap-3 px-2 pb-4 sm:px-3 md:gap-4 md:px-4">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col gap-3 py-2 md:gap-4 md:py-3">
-          <header className="panel-surface sticky top-2 z-30 rounded-[20px] px-3 py-3 sm:px-4 md:top-[5.5rem] md:rounded-[24px] md:px-5">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col gap-3 py-2 md:gap-4">
+          <header className="panel-surface sticky top-2 z-30 px-3 py-3 sm:px-4 md:px-5">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-start gap-2.5 md:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
-                  className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[var(--border-strong)] lg:hidden"
+                  className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] transition hover:border-[var(--border-strong)] lg:hidden"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="h-5 w-5" aria-hidden="true" />
                 </button>
 
                 <div>
-                  <p className="text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[var(--text-dim)]">
-                    Disaster Relief Command Center
+                  <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--text-dim)]">
+                    Disaster Relief Portal
                   </p>
-                  <h1 className="mt-1 text-[1.35rem] font-extrabold tracking-[-0.03em] sm:text-[1.55rem] md:text-[1.8rem]">
+                  <h1 className="mt-1 text-[1.3rem] font-bold tracking-tight sm:text-[1.45rem] md:text-[1.65rem]">
                     {pageMeta.title}
                   </h1>
-                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[var(--text-muted)] sm:text-[0.92rem]">
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
                     {pageMeta.description}
                   </p>
                 </div>
               </div>
 
               <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
-                <label className="panel-muted flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-muted)] md:min-w-[220px] md:w-auto">
+                <label className="panel-muted flex w-full items-center gap-3 px-3 py-2 text-sm text-[var(--text-muted)] md:min-w-[220px] md:w-auto">
                   <Search className="h-4 w-4" aria-hidden="true" />
-                  <span className="truncate">Focused operations workspace</span>
+                  <span className="truncate">Operations workspace</span>
                 </label>
 
-                <div className="panel-muted flex w-full items-center justify-between gap-3 rounded-[18px] px-3 py-2.5 md:w-auto md:gap-3">
+                <div className="panel-muted flex w-full items-center justify-between gap-3 px-3 py-2 md:w-auto md:gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="metric-orb h-10 w-10 rounded-xl">
+                    <span className="metric-orb h-9 w-9">
                       <Shield className="h-5 w-5 text-[var(--accent-primary)]" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
@@ -140,7 +140,7 @@ export default function AppShell({ children }) {
                   <button
                     type="button"
                     onClick={() => setIsSidebarOpen(false)}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text-primary)] lg:hidden"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text-primary)] lg:hidden"
                     aria-label="Close navigation"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
@@ -151,7 +151,7 @@ export default function AppShell({ children }) {
           </header>
 
           <main id="main-content" className="page-transition flex-1 pb-5">
-            <div className="space-y-6">{children}</div>
+            <div className="space-y-4">{children}</div>
           </main>
         </div>
       </div>

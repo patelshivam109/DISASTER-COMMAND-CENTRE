@@ -3,40 +3,40 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --app-bg: #f4f7fb;
-  --app-bg-accent: rgba(46, 98, 226, 0.12);
-  --surface: rgba(255, 255, 255, 0.84);
-  --surface-strong: rgba(255, 255, 255, 0.96);
-  --surface-muted: rgba(225, 232, 241, 0.62);
-  --surface-panel: rgba(246, 250, 255, 0.8);
-  --border-soft: rgba(15, 23, 42, 0.07);
-  --border-strong: rgba(15, 23, 42, 0.12);
-  --text-primary: #0f1e33;
-  --text-muted: #50617a;
-  --text-dim: #73839a;
-  --accent-primary: #2e62e2;
-  --accent-secondary: #0f9f88;
-  --accent-success: #10866f;
-  --accent-warning: #be7b21;
-  --accent-danger: #b84646;
-  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.07);
-  --shadow-card: 0 12px 36px rgba(15, 23, 42, 0.08);
+  --app-bg: #f6f8fb;
+  --app-bg-accent: rgba(0, 104, 92, 0.08);
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --surface-muted: #edf2f7;
+  --surface-panel: #f8fafc;
+  --border-soft: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.18);
+  --text-primary: #172033;
+  --text-muted: #536174;
+  --text-dim: #7a8797;
+  --accent-primary: #2357c6;
+  --accent-secondary: #067a6f;
+  --accent-success: #11765e;
+  --accent-warning: #a66312;
+  --accent-danger: #b42318;
+  --shadow-soft: 0 4px 14px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 6px 18px rgba(15, 23, 42, 0.07);
 }
 
 .dark {
-  --app-bg: #0a1628;
-  --app-bg-accent: rgba(82, 126, 226, 0.16);
-  --surface: rgba(13, 24, 41, 0.9);
-  --surface-strong: rgba(14, 30, 48, 0.96);
-  --surface-muted: rgba(34, 48, 69, 0.82);
-  --surface-panel: rgba(14, 26, 43, 0.88);
-  --border-soft: rgba(155, 174, 201, 0.14);
-  --border-strong: rgba(155, 174, 201, 0.22);
+  --app-bg: #111827;
+  --app-bg-accent: rgba(45, 212, 191, 0.1);
+  --surface: #182235;
+  --surface-strong: #1c273a;
+  --surface-muted: #243148;
+  --surface-panel: #141f31;
+  --border-soft: rgba(203, 213, 225, 0.12);
+  --border-strong: rgba(203, 213, 225, 0.22);
   --text-primary: #eff7f3;
   --text-muted: #9dafc3;
   --text-dim: #8293ab;
-  --accent-primary: #7b96ff;
-  --accent-secondary: #3ec9b5;
+  --accent-primary: #8aa7ff;
+  --accent-secondary: #46d3c1;
   --accent-success: #39c59c;
   --accent-warning: #f2b75b;
   --accent-danger: #f47979;
@@ -62,23 +62,7 @@ body {
   margin: 0;
   font-family: "Manrope", "IBM Plex Sans", "Segoe UI", sans-serif;
   color: var(--text-primary);
-  background:
-    radial-gradient(circle at top left, rgba(37, 151, 124, 0.1), transparent 28%),
-    radial-gradient(circle at top right, rgba(62, 100, 255, 0.1), transparent 32%),
-    linear-gradient(180deg, var(--app-bg) 0%, color-mix(in srgb, var(--app-bg) 82%, #eef3f8 18%) 100%);
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.44) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.44) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(circle at center, black 18%, transparent 82%);
-  opacity: 0.1;
-  pointer-events: none;
+  background: var(--app-bg);
 }
 
 * {
@@ -95,48 +79,40 @@ body::before {
 }
 
 .panel-surface {
-  background: linear-gradient(180deg, var(--surface-strong) 0%, var(--surface) 100%);
+  background: var(--surface);
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow-card);
-  backdrop-filter: blur(14px);
+  border-radius: 10px !important;
 }
 
 .panel-muted {
   background: var(--surface-panel);
   border: 1px solid var(--border-soft);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  border-radius: 8px !important;
 }
 
 .hero-panel {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(108, 145, 255, 0.26), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(42, 177, 149, 0.2), transparent 28%),
-    linear-gradient(135deg, rgba(11, 26, 48, 0.98), rgba(14, 39, 66, 0.94));
-  box-shadow: 0 18px 44px rgba(5, 17, 31, 0.24);
+  background: linear-gradient(135deg, #17324f 0%, #0f5f58 100%);
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(5, 17, 31, 0.16);
 }
 
 .hero-panel::after {
-  content: "";
-  position: absolute;
-  inset: auto -12% -28% auto;
-  width: 280px;
-  height: 280px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%);
+  display: none;
 }
 
 .section-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.45rem 0.85rem;
+  padding: 0.35rem 0.65rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.08);
   color: rgba(239, 247, 243, 0.85);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -148,19 +124,19 @@ body::before {
   height: 0.55rem;
   border-radius: 999px;
   background: linear-gradient(180deg, #7af0cc 0%, #2fd8a5 100%);
-  box-shadow: 0 0 0 5px rgba(66, 214, 165, 0.14);
+  box-shadow: 0 0 0 4px rgba(66, 214, 165, 0.14);
 }
 
 .status-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.45rem 0.82rem;
+  padding: 0.3rem 0.58rem;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--surface-panel) 74%, transparent);
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -175,17 +151,17 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.65rem;
-  height: 2.65rem;
-  border-radius: 0.95rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(238, 244, 250, 0.78));
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem !important;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-soft);
+  box-shadow: none;
 }
 
 .dark .metric-orb {
-  background: linear-gradient(180deg, rgba(17, 33, 53, 0.94), rgba(13, 24, 41, 0.84));
-  border-color: rgba(155, 174, 201, 0.12);
+  background: var(--surface-panel);
+  border-color: var(--border-soft);
 }
 
 .page-transition {

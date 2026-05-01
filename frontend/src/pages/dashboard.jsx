@@ -56,10 +56,10 @@ function HeroHighlights({ items }) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-[24px] border border-white/10 bg-white/8 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur"
+          className="rounded-lg border border-white/10 bg-white/8 px-4 py-3"
         >
           <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white/58">{item.label}</p>
-          <p className="mt-3 break-words text-2xl font-extrabold tracking-[-0.04em] text-white sm:text-[1.75rem]">{item.value}</p>
+          <p className="mt-2 break-words text-xl font-bold tracking-tight text-white sm:text-2xl">{item.value}</p>
           <p className="mt-2 text-sm text-white/70">{item.help}</p>
         </div>
       ))}
@@ -78,11 +78,11 @@ function MetricCard({ title, value, subtitle, icon, tone = "primary" }) {
   };
 
   return (
-    <SurfaceCard className="rounded-[28px] p-5 transition duration-300 hover:-translate-y-1">
+    <SurfaceCard className="p-4 transition duration-200 hover:border-[var(--border-strong)]">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-[var(--text-muted)]">{title}</p>
-          <p className={`mt-4 text-[2rem] font-extrabold tracking-[-0.04em] ${toneStyles[tone]}`}>{value}</p>
+          <p className={`mt-3 text-2xl font-bold tracking-tight ${toneStyles[tone]}`}>{value}</p>
           <p className="mt-2 text-sm text-[var(--text-dim)]">{subtitle}</p>
         </div>
             <span className={`metric-orb ${toneStyles[tone]}`}>
@@ -95,21 +95,21 @@ function MetricCard({ title, value, subtitle, icon, tone = "primary" }) {
 
 function ProgressList({ title, items, emptyMessage, renderMeta }) {
   return (
-    <SurfaceCard className="rounded-[28px] p-6">
+    <SurfaceCard className="p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <p className="text-lg font-bold tracking-[-0.02em]">{title}</p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Focused view for the highest-signal records only.</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Highest-priority records for quick follow-up.</p>
         </div>
         <StatusChip tone="neutral">{items.length} tracked</StatusChip>
       </div>
 
       <div className="mt-6 space-y-4">
         {items.length === 0 ? (
-          <div className="panel-muted rounded-[22px] px-4 py-6 text-sm text-[var(--text-muted)]">{emptyMessage}</div>
+          <div className="panel-muted px-4 py-5 text-sm text-[var(--text-muted)]">{emptyMessage}</div>
         ) : (
           items.map((item) => (
-            <div key={item.key} className="panel-muted rounded-[22px] px-4 py-4">
+            <div key={item.key} className="panel-muted px-4 py-3.5">
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{item.label}</p>
@@ -135,18 +135,18 @@ function ProgressList({ title, items, emptyMessage, renderMeta }) {
 
 function ActivityFeed({ entries, emptyMessage }) {
   return (
-    <SurfaceCard className="rounded-[28px] p-6">
+    <SurfaceCard className="p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-lg font-bold tracking-[-0.02em]">Activity Pulse</p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Recent operational changes from the field and command side.</p>
+          <p className="text-lg font-bold tracking-tight">Activity</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Recent field and command updates.</p>
         </div>
         <StatusChip tone="success">Live</StatusChip>
       </div>
 
       <div className="mt-6 space-y-4">
         {entries.length === 0 ? (
-          <div className="panel-muted rounded-[22px] px-4 py-6 text-sm text-[var(--text-muted)]">{emptyMessage}</div>
+          <div className="panel-muted px-4 py-5 text-sm text-[var(--text-muted)]">{emptyMessage}</div>
         ) : (
           entries.map((entry, index) => (
             <div key={entry.id} className="relative pl-7">
@@ -154,7 +154,7 @@ function ActivityFeed({ entries, emptyMessage }) {
               {index < entries.length - 1 ? (
                 <span className="absolute left-[5px] top-5 h-[calc(100%-0.2rem)] w-px bg-[var(--border-soft)]" />
               ) : null}
-              <div className="panel-muted rounded-[20px] px-4 py-4">
+              <div className="panel-muted px-4 py-3.5">
                 <p className="text-sm font-semibold">{entry.action}</p>
                 <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{entry.details || "No additional details recorded."}</p>
                 <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-dim)]">{formatRelative(entry.created_at)}</p>
@@ -258,21 +258,21 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
-        <SectionEyebrow>Portfolio-grade command view</SectionEyebrow>
-        <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+      <section className="hero-panel p-5 text-white sm:p-6">
+        <SectionEyebrow>Command view</SectionEyebrow>
+        <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.4rem]">
-              Operations clarity for fast-moving disaster response.
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-[2.4rem]">
+              Response status without the noise.
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">
-              See pressure points, incident flow, and resource burn without making the interface feel noisy or generic.
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/74">
+              Incidents, stock warnings, and responder activity are grouped for fast decisions under pressure.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <StatusChip tone="success">Realtime metrics</StatusChip>
-            <StatusChip tone="neutral">Role-aware dashboard</StatusChip>
-            <StatusChip tone="warning">Alerts surfaced first</StatusChip>
+            <StatusChip tone="success">Live metrics</StatusChip>
+            <StatusChip tone="neutral">Role aware</StatusChip>
+            <StatusChip tone="warning">Alerts first</StatusChip>
           </div>
         </div>
         <div className="mt-8">
@@ -281,7 +281,7 @@ function AdminDashboard() {
       </section>
 
       {error ? (
-        <SurfaceCard className="rounded-[24px] border-[rgba(190,76,76,0.2)] bg-[rgba(190,76,76,0.08)] p-5">
+        <SurfaceCard className="border-[rgba(190,76,76,0.2)] bg-[rgba(190,76,76,0.08)] p-5">
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-danger)]" aria-hidden="true" />
             <div>
@@ -299,17 +299,17 @@ function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
-        <SurfaceCard className="rounded-[28px] p-6">
+        <SurfaceCard className="p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-lg font-bold tracking-[-0.02em]">Resource burn and volunteer effort</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">Operational throughput condensed into two quick comparisons.</p>
+              <p className="text-lg font-bold tracking-tight">Resource burn and volunteer effort</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">Two comparisons for current throughput.</p>
             </div>
             <StatusChip tone="primary">Last 12 months</StatusChip>
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <div className="panel-muted rounded-[24px] p-5">
+            <div className="panel-muted p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--text-muted)]">Resource usage by incident</p>
@@ -341,7 +341,7 @@ function AdminDashboard() {
               </div>
             </div>
 
-            <div className="panel-muted rounded-[24px] p-5">
+            <div className="panel-muted p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--text-muted)]">Volunteer hours</p>
@@ -396,7 +396,7 @@ function AdminDashboard() {
             emptyMessage="No recently closed incidents yet."
             items={(data?.recently_completed_disasters || []).map((disaster) => ({
               key: disaster.id,
-              label: `${disaster.type} · ${disaster.location}`,
+              label: `${disaster.type} - ${disaster.location}`,
               caption: `Priority ${disaster.priority || "Moderate"} - ${disaster.response_team || "No team assigned"}`,
             }))}
             renderMeta={() => <StatusChip tone="success">Closed</StatusChip>}
@@ -412,7 +412,7 @@ function AdminDashboard() {
 
 function VolunteerProfileCard({ profile }) {
   return (
-    <SurfaceCard className="rounded-[28px] p-6">
+    <SurfaceCard className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-lg font-bold tracking-[-0.02em]">Responder profile</p>
@@ -424,19 +424,19 @@ function VolunteerProfileCard({ profile }) {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <div className="panel-muted rounded-[22px] px-4 py-4">
+        <div className="panel-muted px-4 py-3.5">
           <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Name</p>
           <p className="mt-2 text-sm font-semibold">{profile?.name || "Volunteer"}</p>
         </div>
-        <div className="panel-muted rounded-[22px] px-4 py-4">
+        <div className="panel-muted px-4 py-3.5">
           <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Phone</p>
           <p className="mt-2 text-sm font-semibold">{profile?.phone || "N/A"}</p>
         </div>
-        <div className="panel-muted rounded-[22px] px-4 py-4">
+        <div className="panel-muted px-4 py-3.5">
           <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Skills</p>
           <p className="mt-2 text-sm font-semibold">{profile?.skills || "General"}</p>
         </div>
-        <div className="panel-muted rounded-[22px] px-4 py-4">
+        <div className="panel-muted px-4 py-3.5">
           <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Verification</p>
           <p className="mt-2 text-sm font-semibold">{profile?.verification_status || "Pending"}</p>
         </div>
@@ -507,15 +507,15 @@ function VolunteerDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
-        <SectionEyebrow>Volunteer cockpit</SectionEyebrow>
-        <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+      <section className="hero-panel p-5 text-white sm:p-6">
+        <SectionEyebrow>Volunteer view</SectionEyebrow>
+        <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.2rem]">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-[2.2rem]">
               Welcome back, {user?.name || user?.username || "responder"}.
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">
-              Stay focused on the mission, track your logged effort, and keep your response profile deployment-ready.
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/74">
+              Your mission, logged hours, and profile status stay visible without extra clutter.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -526,7 +526,7 @@ function VolunteerDashboard() {
       </section>
 
       {error ? (
-        <SurfaceCard className="rounded-[24px] border-[rgba(190,76,76,0.2)] bg-[rgba(190,76,76,0.08)] p-5">
+        <SurfaceCard className="border-[rgba(190,76,76,0.2)] bg-[rgba(190,76,76,0.08)] p-5">
           <p className="font-semibold">Volunteer dashboard data is unavailable</p>
           <p className="mt-2 text-sm text-[var(--text-muted)]">{error}</p>
         </SurfaceCard>
@@ -539,7 +539,7 @@ function VolunteerDashboard() {
       </div>
 
       {data?.personal_profile?.verification_status !== "Verified" ? (
-        <SurfaceCard className="rounded-[26px] border-[rgba(201,142,33,0.2)] bg-[rgba(201,142,33,0.08)] p-5">
+        <SurfaceCard className="border-[rgba(201,142,33,0.2)] bg-[rgba(201,142,33,0.08)] p-5">
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-warning)]" aria-hidden="true" />
             <div>
@@ -584,14 +584,14 @@ function GuestDashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="hero-panel rounded-[32px] p-5 text-white sm:p-8">
+      <section className="hero-panel p-5 text-white sm:p-6">
         <SectionEyebrow>Guest overview</SectionEyebrow>
-        <div className="mt-6 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+        <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-[2rem] font-extrabold tracking-[-0.05em] sm:text-4xl md:text-[3.2rem]">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-[2.2rem]">
               Welcome to the Disaster Relief Portal.
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/72">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/74">
               You are browsing as a guest. Use this page and the disasters page for operational overview, then login for
               assignments, resource controls, and role-specific workflows.
             </p>
