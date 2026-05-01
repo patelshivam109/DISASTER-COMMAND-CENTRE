@@ -68,7 +68,19 @@ def normalize_database_url(database_url):
 
 
 def get_database_url(env_var="DATABASE_URL"):
-    primary_url = normalize_database_url(os.getenv(env_var))
+    raw_value = os.getenv(env_var)
+    if not raw_value:
+        if _allow_sqlite_fallback():
+            fallback = os.getenv("SQLITE_DATABASE_URL") or _default_sqlite_url()
+            warnings.warn(
+                "DATABASE_URL is not set; using local sqlite fallback for development.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return fallback
+        raise RuntimeError("DATABASE_URL is not set. Add it to your .env file.")
+
+    primary_url = normalize_database_url(raw_value)
     parts = urlsplit(primary_url)
 
     if parts.scheme.startswith("postgresql") and not _can_resolve_hostname(parts.hostname):

@@ -57,7 +57,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="flex items-start justify-between gap-3 px-1.5 pb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[linear-gradient(145deg,#2e62e2,#0f9f88)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.25)]">
-              <ShieldAlert className="h-6 w-6" />
+              <ShieldAlert className="h-6 w-6" aria-hidden="true" />
             </div>
             {!isCollapsed && (
               <div>
@@ -71,8 +71,9 @@ export default function Sidebar({ isOpen, onClose }) {
             type="button"
             onClick={onClose}
             className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-muted)] transition hover:text-[var(--text-primary)] lg:hidden"
+            aria-label="Close sidebar"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -116,7 +117,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 {({ isActive }) => (
                   <>
                     <span className={`metric-orb h-9 w-9 rounded-[12px] ${isActive ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)]"}`}>
-                      <Icon className="h-[18px] w-[18px]" />
+                      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                     </span>
                     {!isCollapsed && <span>{item.label}</span>}
                     {isCollapsed && (
@@ -144,17 +145,19 @@ export default function Sidebar({ isOpen, onClose }) {
             type="button"
             onClick={() => setIsDark((previous) => !previous)}
             className={`panel-muted flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-0.5 ${isCollapsed ? "justify-center" : "justify-between"}`}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
             {!isCollapsed && <span>{isDark ? "Switch to light mode" : "Switch to dark mode"}</span>}
-            {isDark ? <Sun className="h-4 w-4 text-[var(--accent-warning)]" /> : <Moon className="h-4 w-4 text-[var(--accent-primary)]" />}
+            {isDark ? <Sun className="h-4 w-4 text-[var(--accent-warning)]" aria-hidden="true" /> : <Moon className="h-4 w-4 text-[var(--accent-primary)]" aria-hidden="true" />}
           </button>
 
           <button
             type="button"
             onClick={hasUser ? handleLogout : () => navigate("/login")}
             className={`flex w-full items-center gap-3 rounded-[14px] border border-[var(--border-soft)] bg-[var(--surface-panel)] px-3 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-0.5 hover:border-[var(--border-strong)] ${isCollapsed ? "justify-center" : ""}`}
+            aria-label={hasUser ? "Log out" : "Open login"}
           >
-            <LogOut className="h-4 w-4 text-[var(--accent-danger)]" />
+            <LogOut className="h-4 w-4 text-[var(--accent-danger)]" aria-hidden="true" />
             {!isCollapsed && <span>{hasUser ? "Log out" : "Open login"}</span>}
           </button>
         </div>
@@ -163,8 +166,9 @@ export default function Sidebar({ isOpen, onClose }) {
           type="button"
           onClick={() => setIsCollapsed((previous) => !previous)}
           className="absolute -right-3 top-20 hidden h-8 w-8 items-center justify-center rounded-full border border-[var(--border-soft)] bg-[var(--surface-strong)] text-[var(--text-muted)] shadow-[var(--shadow-soft)] transition hover:text-[var(--text-primary)] lg:inline-flex"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {isCollapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
         </button>
       </aside>
     </>

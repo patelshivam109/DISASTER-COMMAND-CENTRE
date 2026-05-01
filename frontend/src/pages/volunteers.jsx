@@ -25,18 +25,18 @@ function getStatusConfig(status) {
     case "Verified":
     case "Completed":
       return {
-        icon: <ShieldCheck className="h-4 w-4" />,
+        icon: <ShieldCheck className="h-4 w-4" aria-hidden="true" />,
         color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20",
       };
     case "Pending":
     case "Assigned":
       return {
-        icon: <Clock className="h-4 w-4" />,
+        icon: <Clock className="h-4 w-4" aria-hidden="true" />,
         color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20",
       };
     default:
       return {
-        icon: <UserCheck className="h-4 w-4" />,
+        icon: <UserCheck className="h-4 w-4" aria-hidden="true" />,
         color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20",
       };
   }
@@ -255,7 +255,7 @@ function AdminVolunteerView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-4">
           <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
-            <Users className="h-5 w-5" />
+            <Users className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total Volunteers</p>
@@ -264,7 +264,7 @@ function AdminVolunteerView() {
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-4">
           <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full">
-            <Clock className="h-5 w-5" />
+            <Clock className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Pending Verification</p>
@@ -273,7 +273,7 @@ function AdminVolunteerView() {
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-4">
           <div className="p-3 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
-            <Award className="h-5 w-5" />
+            <Award className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Hours Logged</p>
@@ -357,8 +357,9 @@ function AdminVolunteerView() {
                       <button
                         className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 transition-colors"
                         onClick={() => setSelectedVolunteer(volunteer)}
+                        aria-label={`Open details for ${volunteer.name}`}
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
                       </button>
                     </td>
                   </tr>

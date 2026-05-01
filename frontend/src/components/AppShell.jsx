@@ -102,8 +102,9 @@ export default function AppShell({ children }) {
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
                   className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-panel)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:border-[var(--border-strong)] lg:hidden"
+                  aria-label="Open navigation menu"
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-5 w-5" aria-hidden="true" />
                 </button>
 
                 <div>
@@ -121,14 +122,14 @@ export default function AppShell({ children }) {
 
               <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
                 <label className="panel-muted flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-muted)] md:min-w-[220px] md:w-auto">
-                  <Search className="h-4 w-4" />
+                  <Search className="h-4 w-4" aria-hidden="true" />
                   <span className="truncate">Focused operations workspace</span>
                 </label>
 
                 <div className="panel-muted flex w-full items-center justify-between gap-3 rounded-[18px] px-3 py-2.5 md:w-auto md:gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="metric-orb h-10 w-10 rounded-xl">
-                      <Shield className="h-5 w-5 text-[var(--accent-primary)]" />
+                      <Shield className="h-5 w-5 text-[var(--accent-primary)]" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{user?.name || user?.username || "Relief operator"}</p>
@@ -140,8 +141,9 @@ export default function AppShell({ children }) {
                     type="button"
                     onClick={() => setIsSidebarOpen(false)}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[var(--border-soft)] bg-[var(--surface)] text-[var(--text-muted)] transition hover:text-[var(--text-primary)] lg:hidden"
+                    aria-label="Close navigation"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>

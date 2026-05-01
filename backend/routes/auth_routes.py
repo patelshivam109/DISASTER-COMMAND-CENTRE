@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token
 from sqlalchemy import func, or_
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -194,9 +194,21 @@ def login():
     if not login_input or not password:
         return jsonify({"error": "Email/phone and password are required"}), 400
 
-    user = find_user_by_login(login_input)
-    if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({"error": "Invalid credentials"}), 401
+    try:
+        user = find_user_by_login(login_input)
+        # Protect against missing password hashes on legacy accounts
+        if not user:
+            return jsonify({"error": "Invalid credentials"}), 401
+
+        if not getattr(user, "password_hash", None):
+            return jsonify({"error": "Account has no password set"}), 403
+
+        if not check_password_hash(user.password_hash, password):
+            return jsonify({"error": "Invalid credentials"}), 401
+    except Exception as e:
+        # Log unexpected errors and return generic 500 to the client
+        current_app.logger.exception("Error during login process: %s", e)
+        return jsonify({"error": "Internal server error"}), 500
 
     if not user.password_initialized:
         return jsonify({"error": "Account setup pending. Complete signup first."}), 403

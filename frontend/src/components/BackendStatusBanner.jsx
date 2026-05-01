@@ -60,9 +60,13 @@ export default function BackendStatusBanner() {
 
   return (
     <div className="sticky top-0 z-40 px-2 pt-2 sm:px-3 md:px-5">
-      <div className={`mx-auto flex max-w-[1440px] items-center gap-2.5 rounded-xl border px-3 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur ${meta.className}`}>
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[rgba(255,255,255,0.72)]">
-          <Icon className={`h-5 w-5 ${meta.iconClassName}`} />
+      <div
+        className={`mx-auto flex max-w-[1440px] items-center gap-2.5 rounded-xl border px-3 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur ${meta.className}`}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[rgba(255,255,255,0.72)]" aria-hidden="true">
+          <Icon className={`h-5 w-5 ${meta.iconClassName}`} aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <p className="text-xs font-semibold tracking-[0.01em] sm:text-sm">{message}</p>

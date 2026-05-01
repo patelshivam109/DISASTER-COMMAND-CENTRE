@@ -354,7 +354,7 @@ export default function Resources() {
       </div>
 
       <div className="flex items-center bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-        <Search className="h-4 w-4 text-gray-400 ml-2" />
+        <Search className="h-4 w-4 text-gray-400 ml-2" aria-hidden="true" />
         <input
           type="text"
           placeholder="Search inventory..."
@@ -378,7 +378,7 @@ export default function Resources() {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                      <Package className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                      <Package className="h-5 w-5 text-gray-600 dark:text-gray-300" aria-hidden="true" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">{item.name}</h3>
@@ -405,7 +405,7 @@ export default function Resources() {
 
                 <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                   <div className="flex items-center gap-1">
-                    <Truck className="h-3 w-3" />
+                    <Truck className="h-3 w-3" aria-hidden="true" />
                     {item.location || "Unknown location"}
                   </div>
                   <p>Warehouse: {item.warehouse_info || "Not set"}</p>
@@ -507,8 +507,8 @@ export default function Resources() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-3">
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
-            <Package className="h-4 w-4" />
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+            <Package className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total Resources</p>

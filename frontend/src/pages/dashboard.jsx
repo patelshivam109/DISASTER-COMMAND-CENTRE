@@ -85,9 +85,9 @@ function MetricCard({ title, value, subtitle, icon, tone = "primary" }) {
           <p className={`mt-4 text-[2rem] font-extrabold tracking-[-0.04em] ${toneStyles[tone]}`}>{value}</p>
           <p className="mt-2 text-sm text-[var(--text-dim)]">{subtitle}</p>
         </div>
-        <span className={`metric-orb ${toneStyles[tone]}`}>
-          <IconComponent className="h-5 w-5" />
-        </span>
+            <span className={`metric-orb ${toneStyles[tone]}`}>
+              <IconComponent className="h-5 w-5" aria-hidden="true" />
+            </span>
       </div>
     </SurfaceCard>
   );
@@ -283,7 +283,7 @@ function AdminDashboard() {
       {error ? (
         <SurfaceCard className="rounded-[24px] border-[rgba(190,76,76,0.2)] bg-[rgba(190,76,76,0.08)] p-5">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-danger)]" />
+            <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-danger)]" aria-hidden="true" />
             <div>
               <p className="font-semibold">Dashboard data is unavailable</p>
               <p className="mt-2 text-sm text-[var(--text-muted)]">{error}</p>
@@ -315,7 +315,7 @@ function AdminDashboard() {
                   <p className="text-sm font-semibold text-[var(--text-muted)]">Resource usage by incident</p>
                   <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Top 5 allocations</p>
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-[var(--accent-primary)]" />
+                <ArrowUpRight className="h-4 w-4 text-[var(--accent-primary)]" aria-hidden="true" />
               </div>
               <div className="mt-6 space-y-4">
                 {resourceUsage.length === 0 ? (
@@ -347,7 +347,7 @@ function AdminDashboard() {
                   <p className="text-sm font-semibold text-[var(--text-muted)]">Volunteer hours</p>
                   <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--text-dim)]">Monthly cadence</p>
                 </div>
-                <Sparkles className="h-4 w-4 text-[var(--accent-secondary)]" />
+                <Sparkles className="h-4 w-4 text-[var(--accent-secondary)]" aria-hidden="true" />
               </div>
               <div className="mt-6 flex h-48 items-end gap-3">
                 {monthlyHours.length === 0 ? (
@@ -541,7 +541,7 @@ function VolunteerDashboard() {
       {data?.personal_profile?.verification_status !== "Verified" ? (
         <SurfaceCard className="rounded-[26px] border-[rgba(201,142,33,0.2)] bg-[rgba(201,142,33,0.08)] p-5">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-warning)]" />
+            <ShieldAlert className="mt-0.5 h-5 w-5 text-[var(--accent-warning)]" aria-hidden="true" />
             <div>
               <p className="font-semibold">Verification still pending</p>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">

@@ -504,8 +504,8 @@ export default function Disasters() {
       ) : null}
 
       <div className="flex flex-col items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:flex-row">
-        <div className="relative w-full md:max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <div className="relative w-full md:max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
           <input
             type="text"
             placeholder="Search by title or location..."
@@ -517,7 +517,7 @@ export default function Disasters() {
 
         <div className="flex w-full items-center gap-3 md:w-auto">
           <div className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 md:w-auto">
-            <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
             <select
               className="w-full cursor-pointer bg-transparent text-sm text-gray-700 focus:outline-none dark:text-gray-200"
               value={filterStatus}
@@ -557,9 +557,9 @@ export default function Disasters() {
             key={disaster.id}
             className="panel-surface group rounded-[26px] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)]"
           >
-            <div className="mb-4 flex items-start justify-between">
+              <div className="mb-4 flex items-start justify-between">
               <div className="metric-orb rounded-[18px] text-[var(--accent-primary)]">
-                <AlertTriangle className="h-5 w-5" />
+                <AlertTriangle className="h-5 w-5" aria-hidden="true" />
               </div>
               <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getSeverityColor(disaster.severity)}`}>
                 {disaster.severity} Priority
@@ -570,15 +570,15 @@ export default function Disasters() {
 
             <div className="mt-4 space-y-2">
               <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <MapPin className="mr-2 h-4 w-4" />
+                <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
                 {disaster.location}
               </div>
               <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <Users className="mr-2 h-4 w-4" />
+                <Users className="mr-2 h-4 w-4" aria-hidden="true" />
                 {disaster.affected_display || "N/A"} Affected
               </div>
               <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <Activity className="mr-2 h-4 w-4" />
+                <Activity className="mr-2 h-4 w-4" aria-hidden="true" />
                 Status: <span className={`ml-1 font-medium ${getStatusColor(disaster.status)}`}>{disaster.status}</span>
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
