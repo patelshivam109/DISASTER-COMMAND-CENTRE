@@ -41,7 +41,8 @@ except ModuleNotFoundError:
 
 disaster_bp = Blueprint("disaster_bp", __name__)
 
-ALLOWED_PRIORITIES = {"Critical", "High", "Moderate"}
+ALLOWED_PRIORITIES = {"Critical", "High", "Moderate", "Low"}
+ALLOWED_SEVERITIES = {"Low", "Moderate", "High"}
 ALLOWED_STATUSES = {"Created", "Active", "Recovering", "Closed"}
 
 
@@ -103,12 +104,18 @@ def add_disaster():
     if longitude_error:
         return jsonify({"error": longitude_error}), 400
 
+    severity = data.get("severity", priority)
+    if severity == "Critical":
+        severity = "High"
+    if severity not in ALLOWED_SEVERITIES:
+        return jsonify({"error": "Invalid severity value"}), 400
+
     disaster = Disaster(
         type=data["type"],
         location=data["location"],
         latitude=latitude,
         longitude=longitude,
-        severity=data.get("severity", priority),
+        severity=severity,
         priority=priority,
         status=status,
         response_team=data.get("response_team"),
@@ -134,8 +141,45 @@ def add_disaster():
 
 @disaster_bp.route("/disasters", methods=["GET"])
 def get_disasters():
-    disasters = Disaster.query.order_by(Disaster.id.desc()).all()
-    return jsonify([disaster.to_dict() for disaster in disasters]), 200
+    status = request.args.get("status")
+    severity = request.args.get("severity")
+
+    query = db.session.query(
+        Disaster.id,
+        Disaster.type,
+        Disaster.latitude,
+        Disaster.longitude,
+        Disaster.severity,
+        Disaster.status,
+    )
+
+    if status and status != "All":
+        if status not in ALLOWED_STATUSES:
+            return jsonify({"error": "Invalid status filter"}), 400
+        query = query.filter(Disaster.status == status)
+
+    if severity and severity != "All":
+        if severity not in ALLOWED_SEVERITIES:
+            return jsonify({"error": "Invalid severity filter"}), 400
+        query = query.filter(Disaster.severity == severity)
+
+    disasters = query.order_by(Disaster.id.desc()).all()
+    return (
+        jsonify(
+            [
+                {
+                    "id": disaster.id,
+                    "type": disaster.type,
+                    "latitude": disaster.latitude,
+                    "longitude": disaster.longitude,
+                    "severity": disaster.severity,
+                    "status": disaster.status,
+                }
+                for disaster in disasters
+            ]
+        ),
+        200,
+    )
 
 
 @disaster_bp.route("/disasters/<int:disaster_id>", methods=["PATCH"])
@@ -157,6 +201,11 @@ def update_disaster(disaster_id):
 
     if "priority" in data and data["priority"] not in ALLOWED_PRIORITIES:
         return jsonify({"error": "Invalid priority value"}), 400
+    if "severity" in data:
+        incoming_severity = "High" if data["severity"] == "Critical" else data["severity"]
+        if incoming_severity not in ALLOWED_SEVERITIES:
+            return jsonify({"error": "Invalid severity value"}), 400
+        data["severity"] = incoming_severity
 
     updated = False
     previous_status = disaster.status

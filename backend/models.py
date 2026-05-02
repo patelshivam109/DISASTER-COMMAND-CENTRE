@@ -55,6 +55,23 @@ class Disaster(db.Model):
     )
     activity_logs = db.relationship("ActivityLog", back_populates="disaster", lazy=True)
 
+    __table_args__ = (
+        db.Index("ix_disaster_status", "status"),
+        db.Index("ix_disaster_severity", "severity"),
+        db.Index("ix_disaster_status_severity", "status", "severity"),
+        db.Index("ix_disaster_coordinates", "latitude", "longitude"),
+    )
+
+    def to_map_dict(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "severity": self.severity,
+            "status": self.status,
+        }
+
     def to_dict(self):
         active_assignments = [
             assignment

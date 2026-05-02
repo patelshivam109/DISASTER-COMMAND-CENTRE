@@ -19,10 +19,11 @@ function parseCoordinate(value) {
 }
 
 function mapDisasterForView(item) {
+  const locationLabel = item.location || "Mapped incident";
   return {
     id: item.id,
-    title: `${item.type} - ${item.location}`,
-    location: item.location,
+    title: item.location ? `${item.type} - ${item.location}` : item.type,
+    location: locationLabel,
     latitude: parseCoordinate(item.latitude),
     longitude: parseCoordinate(item.longitude),
     severity: item.severity || item.priority || "Moderate",
@@ -323,7 +324,8 @@ export default function Disasters() {
   const filteredDisasters = disasters.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
-      item.location.toLowerCase().includes(deferredSearchTerm.toLowerCase());
+      item.location.toLowerCase().includes(deferredSearchTerm.toLowerCase()) ||
+      String(item.id).includes(deferredSearchTerm.trim());
     const matchesStatus = filterStatus === "All" || item.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -405,9 +407,9 @@ export default function Disasters() {
                   setNewDisaster({ ...newDisaster, priority: event.target.value, severity: event.target.value })
                 }
               >
+                <option value="Low">Low</option>
                 <option value="Moderate">Moderate</option>
                 <option value="High">High</option>
-                <option value="Critical">Critical</option>
               </select>
             </div>
             <div>

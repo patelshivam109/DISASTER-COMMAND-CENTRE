@@ -27,11 +27,10 @@ def _can_resolve_hostname(hostname):
 
 
 def _allow_sqlite_fallback():
-    # Enabled by default for local/dev runs; disabled by default in production.
+    # SQLite fallback is opt-in only so production-like runs fail fast when
+    # PostgreSQL/Supabase configuration is missing or unhealthy.
     explicit = os.getenv("ALLOW_SQLITE_FALLBACK")
-    if explicit is not None:
-        return _truthy(explicit)
-    return (os.getenv("FLASK_ENV") or "").strip().lower() != "production"
+    return explicit is not None and _truthy(explicit)
 
 
 def normalize_database_url(database_url):
@@ -57,6 +56,10 @@ def normalize_database_url(database_url):
         )
 
     if value.startswith("sqlite:///"):
+        if not _allow_sqlite_fallback():
+            raise RuntimeError(
+                "SQLite database URLs are disabled. Configure DATABASE_URL with PostgreSQL/Supabase."
+            )
         raw_path = value[len("sqlite:///") :]
         if not os.path.isabs(raw_path):
             raw_path = os.path.abspath(os.path.join(os.path.dirname(__file__), raw_path))
@@ -86,11 +89,9 @@ def get_database_url(env_var="DATABASE_URL"):
     if parts.scheme.startswith("postgresql") and not _can_resolve_hostname(parts.hostname):
         if _allow_sqlite_fallback():
             return os.getenv("SQLITE_DATABASE_URL") or _default_sqlite_url()
-        warnings.warn(
-            "DATABASE_URL host DNS pre-check failed. Continuing with configured PostgreSQL URL. "
-            "If runtime queries fail, replace DATABASE_URL with Supabase session pooler URL.",
-            RuntimeWarning,
-            stacklevel=2,
+        raise RuntimeError(
+            "DATABASE_URL host DNS pre-check failed. Replace DATABASE_URL with a reachable "
+            "PostgreSQL/Supabase URL, commonly the Supabase session pooler URL."
         )
 
     return primary_url
