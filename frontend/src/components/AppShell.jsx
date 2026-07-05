@@ -8,28 +8,28 @@ const PAGE_META = {
   "/": {
     title: "Operations Overview",
     description: "Current incidents, stock pressure, and responder activity in one clear workspace.",
-    seoTitle: "Disaster Relief Portal | Operational Overview",
+    seoTitle: "ResQlink | Operational Overview",
     seoDescription:
-      "Track live disaster response overview, incident status, and readiness summaries in the Disaster Relief Portal.",
+      "Track live disaster response overview, incident status, and readiness summaries in ResQlink.",
   },
   "/disasters": {
     title: "Incidents",
     description: "Track location, severity, lifecycle stage, and field updates.",
-    seoTitle: "Disaster Relief Portal | Incident Map",
+    seoTitle: "ResQlink | Incident Map",
     seoDescription:
       "View disaster incidents, locations, status transitions, and operational updates in one responsive map-driven workspace.",
   },
   "/resources": {
     title: "Resources",
     description: "Manage inventory, allocations, and replenishment risk.",
-    seoTitle: "Disaster Relief Portal | Resource Allocation",
+    seoTitle: "ResQlink | Resource Allocation",
     seoDescription:
       "Manage relief inventory, stock thresholds, and resource allocation history for active disaster operations.",
   },
   "/volunteers": {
     title: "Volunteers",
     description: "Verify people, assign work, and monitor progress.",
-    seoTitle: "Disaster Relief Portal | Volunteer Network",
+    seoTitle: "ResQlink | Volunteer Network",
     seoDescription:
       "Coordinate volunteer profiles, verification, assignments, and response progress through a centralized operations console.",
   },
@@ -47,7 +47,7 @@ export default function AppShell({ children }) {
       PAGE_META[location.pathname] || {
         title: "Command Center",
         description: "Keep response work aligned with a focused workflow.",
-        seoTitle: "Disaster Relief Portal",
+        seoTitle: "ResQlink",
         seoDescription:
           "A modern disaster response command center for managing incidents, resources, and volunteer operations.",
       },
@@ -109,7 +109,7 @@ export default function AppShell({ children }) {
 
                 <div>
                   <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--text-dim)]">
-                    Disaster Relief Portal
+                    ResQlink
                   </p>
                   <h1 className="mt-1 text-[1.3rem] font-bold tracking-tight sm:text-[1.45rem] md:text-[1.65rem]">
                     {pageMeta.title}

@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   LogOut,
   Moon,
-  ShieldAlert,
   Sun,
   Users,
   X,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import useDarkMode from "../hooks/useDarkMode";
 import { clearAuthSession, getStoredUser, getUserRole, isLoggedIn } from "../utils/auth";
+import resqlinkLogo from "../assets/resqlink-logo.png";
 
 const NAV_ITEMS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -56,12 +56,12 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         <div className="flex items-start justify-between gap-3 px-1 pb-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#17324f] text-white">
-              <ShieldAlert className="h-6 w-6" aria-hidden="true" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden">
+              <img src={resqlinkLogo} alt="ResQlink Logo" className="h-10 w-10 object-contain" />
             </div>
             {!isCollapsed && (
               <div>
-                <p className="text-base font-bold tracking-tight">ReliefPortal</p>
+                <p className="text-base font-bold tracking-tight">ResQlink</p>
                 <p className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--text-dim)]">Operations</p>
               </div>
             )}

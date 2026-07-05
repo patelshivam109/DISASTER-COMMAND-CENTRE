@@ -589,7 +589,7 @@ function GuestDashboard() {
         <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-[2.2rem]">
-              Welcome to the Disaster Relief Portal.
+              Welcome to ResQlink.
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-white/74">
               You are browsing as a guest. Use this page and the disasters page for operational overview, then login for

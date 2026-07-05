@@ -151,6 +151,25 @@ def update_resource(resource_id):
     return jsonify({"message": "Resource updated successfully", "resource": resource.to_dict()}), 200
 
 
+@resource_bp.route("/resources/<int:resource_id>", methods=["DELETE"])
+@require_roles("admin")
+def delete_resource(resource_id):
+    resource = db.session.get(Resource, resource_id)
+    if not resource:
+        return jsonify({"error": "Resource not found"}), 404
+
+    resource_name = resource.name
+    db.session.delete(resource)
+    log_activity(
+        action="Resource Deleted",
+        details=f"{resource_name} removed from inventory",
+        actor=g.current_user,
+        resource_id=resource_id,
+    )
+    db.session.commit()
+    return jsonify({"message": "Resource deleted successfully"}), 200
+
+
 @resource_bp.route("/resources/<int:resource_id>/allocate", methods=["POST"])
 @require_roles("admin")
 def allocate_resource(resource_id):

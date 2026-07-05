@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle, Package, Search, Truck } from "lucide-react";
+import { AlertCircle, CheckCircle, Package, Search, Truck, Edit2, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import { isAdmin, isLoggedIn } from "../utils/auth";
@@ -52,10 +52,21 @@ export default function Resources() {
   const [allocationHistory, setAllocationHistory] = useState([]);
   const [showResourceForm, setShowResourceForm] = useState(false);
   const [allocationFormFor, setAllocationFormFor] = useState(null);
+  const [editingResourceId, setEditingResourceId] = useState(null);
   const [resourceError, setResourceError] = useState("");
   const [resourceNotice, setResourceNotice] = useState("");
 
   const [newResource, setNewResource] = useState({
+    name: "",
+    category: "General",
+    quantity: "",
+    location: "",
+    warehouse_info: "",
+    low_threshold: 50,
+    critical_threshold: 20,
+  });
+
+  const [editData, setEditData] = useState({
     name: "",
     category: "General",
     quantity: "",
@@ -198,6 +209,79 @@ export default function Resources() {
     } catch (error) {
       console.error("Error allocating resource:", error);
       setResourceError(error.message || "Failed to allocate resource.");
+    }
+  };
+
+  const handleStartEdit = (resource) => {
+    setEditingResourceId(resource.id);
+    setEditData({
+      name: resource.name,
+      category: resource.category,
+      quantity: resource.quantity,
+      location: resource.location || "",
+      warehouse_info: resource.warehouse_info || "",
+      low_threshold: resource.low_threshold,
+      critical_threshold: resource.critical_threshold,
+    });
+    setResourceError("");
+    setResourceNotice("");
+  };
+
+  const handleSaveEdit = async (resourceId) => {
+    if (!requireAuth() || !canManageResources) return;
+    setResourceError("");
+    setResourceNotice("");
+    try {
+      const payload = {
+        name: editData.name,
+        category: editData.category,
+        quantity: Number(editData.quantity),
+        location: editData.location,
+        warehouse_info: editData.warehouse_info,
+        low_threshold: Number(editData.low_threshold),
+        critical_threshold: Number(editData.critical_threshold),
+      };
+      const response = await apiFetch(`/resources/${resourceId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const message = await getApiError(response, "Failed to update resource");
+        throw new Error(message);
+      }
+      setEditingResourceId(null);
+      await loadResources();
+      await loadAllocationHistory();
+      setResourceNotice("Resource updated successfully.");
+    } catch (error) {
+      console.error("Error updating resource:", error);
+      setResourceError(error.message || "Failed to update resource.");
+    }
+  };
+
+  const handleDeleteResource = async (resourceId, resourceName) => {
+    if (!requireAuth() || !canManageResources) return;
+    const confirmed = window.confirm(`Are you sure you want to delete "${resourceName}"? This action cannot be undone.`);
+    if (!confirmed) return;
+    
+    setResourceError("");
+    setResourceNotice("");
+    try {
+      const response = await apiFetch(`/resources/${resourceId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const message = await getApiError(response, "Failed to delete resource");
+        throw new Error(message);
+      }
+      await loadResources();
+      await loadAllocationHistory();
+      setResourceNotice("Resource deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting resource:", error);
+      setResourceError(error.message || "Failed to delete resource.");
     }
   };
 
@@ -415,9 +499,115 @@ export default function Resources() {
                 </div>
 
                 {canManageResources && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                    {editingResourceId === item.id ? (
+                      <div className="space-y-3 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={editData.name}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Category</label>
+                            <input
+                              type="text"
+                              value={editData.category}
+                              onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editData.quantity}
+                              onChange={(e) => setEditData({ ...editData, quantity: e.target.value })}
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</label>
+                          <input
+                            type="text"
+                            value={editData.location}
+                            onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Warehouse Info</label>
+                          <input
+                            type="text"
+                            value={editData.warehouse_info}
+                            onChange={(e) => setEditData({ ...editData, warehouse_info: e.target.value })}
+                            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Low Threshold</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editData.low_threshold}
+                              onChange={(e) => setEditData({ ...editData, low_threshold: e.target.value })}
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Critical</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editData.critical_threshold}
+                              onChange={(e) => setEditData({ ...editData, critical_threshold: e.target.value })}
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
+                            onClick={() => handleSaveEdit(item.id)}
+                          >
+                            Save Changes
+                          </button>
+                          <button
+                            className="flex-1 px-3 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium rounded-lg"
+                            onClick={() => setEditingResourceId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm font-medium rounded-lg p-2"
+                          onClick={() => handleStartEdit(item)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          Edit
+                        </button>
+                        <button
+                          className="flex-1 flex items-center justify-center gap-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg p-2"
+                          onClick={() => handleDeleteResource(item.id, item.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
+
                     <button
-                      className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
+                      className="w-full text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
                       onClick={() => {
                         setAllocationFormFor((prev) => (prev === item.id ? null : item.id));
                         setAllocationDraft({ disaster_id: "", quantity: "", notes: "" });

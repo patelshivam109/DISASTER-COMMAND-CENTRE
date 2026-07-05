@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ShieldAlert } from "lucide-react";
 import { AUTH_API_BASE_URL } from "../api/config";
 import { persistAuthSession } from "../utils/auth";
+import resqlinkLogo from "../assets/resqlink-logo.png";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -126,11 +126,11 @@ export default function Signup() {
       <div className={`max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${motionClass}`}>
         <div className="space-y-6 hidden md:block">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-600 rounded-lg text-white shrink-0 shadow-lg shadow-blue-500/30">
-              <ShieldAlert size={24} />
+            <div className="flex h-10 w-10 items-center justify-center">
+              <img src={resqlinkLogo} alt="ResQlink Logo" className="h-10 w-10 object-contain" />
             </div>
             <span className="font-bold text-xl tracking-tight text-slate-50 whitespace-nowrap">
-              ReliefPortal
+              ResQlink
             </span>
           </div>
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldAlert } from "lucide-react";
 import { AUTH_API_BASE_URL } from "../api/config";
+import resqlinkLogo from "../assets/resqlink-logo.png";
 
 export default function ResetPassword() {
   const [identifier, setIdentifier] = useState("");
@@ -49,12 +49,12 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-slate-100 px-4">
       <div className="max-w-lg w-full space-y-6 bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-blue-600 rounded-lg text-white shrink-0 shadow-lg shadow-blue-500/30">
-            <ShieldAlert size={22} />
+          <div className="flex h-10 w-10 items-center justify-center">
+            <img src={resqlinkLogo} alt="ResQlink Logo" className="h-10 w-10 object-contain" />
           </div>
           <div>
             <h1 className="font-bold text-lg tracking-tight text-slate-50">
-              ReliefPortal
+              ResQlink
             </h1>
             <p className="text-xs text-slate-400">Account security center</p>
           </div>
