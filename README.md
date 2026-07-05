@@ -1,22 +1,63 @@
-I built a Real-Time Disaster Relief Command Center 🚨 — and I’m still improving it.
+# ResQlink 🛡️
+### Unified Response | Secure Intelligence
 
-Most beginner projects stop at basic CRUD. I wanted to build something closer to a real-world system used during emergencies.
+A Real-Time Disaster Response Command Center — built for speed, clarity, and coordination during emergencies.
 
-So I developed a full-stack Disaster Relief Portal that helps coordinate disasters, volunteers, and resources in one place.
+Most beginner projects stop at basic CRUD. ResQlink is built closer to a real-world system used during active crisis events — bringing incidents, resources, and volunteers into a single, unified workspace.
 
- Key Features:
+---
 
-* Disaster lifecycle tracking (Created → Active → Recovering → Closed)
-* Role-based system (Admin & Volunteer workflows)
-* Volunteer assignment + response system
-* Resource management with low-stock alerts
-* Analytics dashboard (incident status, resource usage, volunteer hours)
-* Activity/Audit logs for full traceability
-* PDF report generation for post-incident summaries
+## Key Features
 
- Tech Stack:
+- **Disaster lifecycle tracking** — Created → Active → Recovering → Closed
+- **Role-based access** — Separate Admin & Volunteer workflows with JWT auth
+- **Volunteer assignment & response system** — Field task coordination in real time
+- **Resource management** — Inventory tracking with low-stock alerts and allocation history
+- **Analytics dashboard** — Incident status, resource usage, volunteer hours at a glance
+- **Activity / Audit logs** — Full traceability for every action
+- **PDF report generation** — Post-incident summaries for review and record-keeping
 
-* Frontend: React (Vite, Tailwind CSS)
-* Backend: Flask (SQLAlchemy, Blueprints)
-* Database: SQLite moved to postgresql
-* Auth: JWT-based role access with secure password hashing
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React (Vite), Vanilla CSS |
+| Backend | Flask (SQLAlchemy, Blueprints) |
+| Database | PostgreSQL (migrated from SQLite) |
+| Auth | JWT-based role access with secure password hashing |
+
+---
+
+## Getting Started
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+py app.py
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## Project Structure
+
+```
+disaster-relief-portal/
+├── backend/          # Flask API (routes, models, auth)
+├── frontend/         # React app (pages, components, assets)
+│   └── src/
+│       ├── assets/   # resqlink-logo.png and static assets
+│       ├── components/
+│       ├── pages/
+│       └── ...
+└── README.md
+```
