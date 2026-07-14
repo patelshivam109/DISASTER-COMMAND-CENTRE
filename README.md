@@ -1,4 +1,4 @@
-# ResQlink 🛡️
+# ResQlink (Disaster Command centre)🛡️
 ### Unified Response | Secure Intelligence
 
 A Real-Time Disaster Response Command Center — built for speed, clarity, and coordination during emergencies.
