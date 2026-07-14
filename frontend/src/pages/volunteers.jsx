@@ -374,12 +374,34 @@ function AdminVolunteerView() {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Volunteer Assignment Control</h2>
-            <button
-              className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              onClick={() => setSelectedVolunteer(null)}
-            >
-              Close
-            </button>
+            <div className="space-x-4">
+              <button
+                className="text-xs text-red-600 hover:underline"
+                onClick={async () => {
+                  if (!window.confirm(`Are you sure you want to delete ${selectedVolunteer.name}?`)) return;
+                  setAdminError("");
+                  setAdminNotice("");
+                  const response = await apiFetch(`/volunteers/${selectedVolunteer.id}`, {
+                    method: "DELETE",
+                  });
+                  if (!response.ok) {
+                    setAdminError(await getApiError(response, "Failed to delete volunteer"));
+                    return;
+                  }
+                  setAdminNotice("Volunteer deleted successfully.");
+                  setSelectedVolunteer(null);
+                  await loadData();
+                }}
+              >
+                Delete Volunteer
+              </button>
+              <button
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setSelectedVolunteer(null)}
+              >
+                Close
+              </button>
+            </div>
           </div>
 
           <div>
