@@ -2,7 +2,7 @@
 
 ### Unified Response | Secure Intelligence
 
-A Real-Time Disaster Response Command Center — built for speed, clarity, and coordination during emergencies.
+A Real-Time Disaster Response Command Center — built for speed, clarity, and coordination during emergencies..
 
 Unlike basic CRUD applications, ResQlink is a full-stack, modular web application designed for comprehensive crisis management. It serves as a command center that intricately links geographic disaster locations, physical resources (inventory), and human capital (volunteers), tied together with a strict auditing and tracking system.
 
